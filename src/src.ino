@@ -1,5 +1,7 @@
 #include <STM32L0.h> 
 #include <TimerMillis.h>
+#include <Wire.h>
+#include <SPI.h>
 #include "board.h"
 #include "command.h"
 #include "lorawan.h"
@@ -8,6 +10,10 @@
 #include "status.h"
 #include "project_utils.h"
 #include "rf_testing.h"
+
+#include "MPU9250.h"
+
+MPU9250 mpu(SPI, PA11);
 
 #define debug
 #define serial_debug  Serial
@@ -215,7 +221,7 @@ bool state_check_timeout(void){
 void setup() {
   //STM32L0.deepsleep(60000); //limits the reboot continuous cycle from happening for any reason, likely low battery
   // Watchdog
-  STM32L0.wdtEnable(18000);
+  //STM32L0.wdtEnable(18000);
   analogReadResolution(12);
 
   pinMode(LED_RED,OUTPUT);
@@ -227,7 +233,6 @@ void setup() {
   pinMode(A_INT2, INPUT);
   attachInterrupt(digitalPinToInterrupt(A_INT2),accelerometer_callback,CHANGE);
 #endif
-
 
   // Serial port debug setup
   #ifdef serial_debug
@@ -254,6 +259,30 @@ void setup() {
   // setup default settings
   settings_init();
   state = INIT;
+
+
+  mpu.setup();
+  mpu.calibrateAccelGyro(); //Public MPU9250 calibration function
+
+  delay(2000);
+  mpu.calibrateMag();
+  delay(2000); // add delay to see results before serial spew of data
+  Serial.println("Rest accelometer");
+  delay(5000);
+  mpu.calibrateAccelGyro();
+
+
+
+    while(1)
+    {
+        mpu.updateAccelGyro(); //Update accelometer and gyro data
+        mpu.updateMag();
+        mpu.printData();
+        delay(100);
+    }
+
+
+
 }
 
 /**

@@ -209,4 +209,19 @@ for (i = 0; i < parsed_locations.length; i++)
     
     msg.payload.push(lat_lon_packet)
 }
+
 ```
+## Calibration process
+
+To calibrate the gyroscope and accelerometer sensor, few steps must be completed.
+
+1. Press and hold either button 1 or button 2 until LED starts blinking, then release.
+2. Press either button 1 or button 2 once
+3. When the LED turns on, start moving the unit in figure 8 shape for 30s until the LED turns off
+4. Put the device on the flat surface.
+5. Press either button 1 or button 2 once and wait 10 seconds.
+6. Led will then blink 3 times, which means that calibration procedure is complete.
+
+Upon correct calibration the device will return close to 0 wave height when rested at a flat surface.
+
+
