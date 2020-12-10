@@ -40,10 +40,12 @@ public:
 	float getSignificantWave(); 
 	float getAverageWave();
 	float getAveragePeriod();
+    void calibrate_mpu();
+    void read_cal_values_from_flash();
 
 private:
 
-	MPU9250 mpu(Wire); //MPU9250 sensor
+	MPU9250 mpu; //MPU9250 sensor
 	MotionArray *A; //Filtered acceleration data array
 
 	bool full = false; //Denotes if data array is full

@@ -1,16 +1,8 @@
 #include "MPU9250.h"
 
-static const uint8_t SPI_READ = 0x80;
 /* CONSTRUCTOR */
-MPU9250::MPU9250(TwoWire &bus) {
-  _useSPI = false; 
-};
+MPU9250::MPU9250() {};
 
-MPU9250::MPU9250(SPIClass &bus,uint8_t csPin){
-  _spi = &bus; // SPI bus
-  _csPin = csPin; // chip select pin
-  _useSPI = true; // set to use SPI
-}
 /* PUBLIC METHODS */
 
 #pragma region void MPU9250::setup()
@@ -24,15 +16,6 @@ void MPU9250::setup()
 {
 	data_delay = INNITIAL_DATA_DELAY;
 
-    if( _useSPI ) { // using SPI for communication
-        // use low speed SPI for register setting
-        // setting CS pin to output
-        pinMode(_csPin, OUTPUT);
-        // setting CS pin high
-        digitalWrite(_csPin, HIGH);
-        // begin SPI communication
-        _spi->begin();
-    }
 	uint8_t m_whoami = 0x00;
 	uint8_t a_whoami = 0x00;
 
@@ -82,14 +65,6 @@ void MPU9250::setup()
 }
 #pragma endregion
 
-void MPU9250::printRollPitchYaw() {
-        Serial.print("Yaw, Pitch, Roll: ");
-        Serial.print(yaw, 2);
-        Serial.print(", ");
-        Serial.print(pitch, 2);
-        Serial.print(", ");
-        Serial.println(roll, 2);
-}
 #pragma region void MPU9250::calibrateAccelGyro()
 /* Calibrate MPU9250 accelometer and gyro - public function
 Input: /
@@ -114,6 +89,50 @@ void MPU9250::calibrateMag()
 }
 #pragma endregion
 
+void MPU9250::getMagCalib(float * extMagBias, float * extMagScale)
+{
+    extMagBias[0] = magBias[0];
+    extMagBias[1] = magBias[1];
+    extMagBias[2] = magBias[2];
+
+    extMagScale[0] = magScale[0];
+    extMagScale[1] = magScale[1];
+    extMagScale[2] = magScale[2];
+}
+
+void MPU9250::getGyroAccelCalib(float * extGyroBias, float * extAccelBias)
+{
+    extGyroBias[0] = gyroBias[0];
+    extGyroBias[1] = gyroBias[1];
+    extGyroBias[2] = gyroBias[2];
+
+    extAccelBias[0] = accelBias[0];
+    extAccelBias[1] = accelBias[1];
+    extAccelBias[2] = accelBias[2];
+}
+
+void MPU9250::setMagCalib(float * extMagBias, float * extMagScale)
+{
+    magBias[0] = extMagBias[0];
+    magBias[1] = extMagBias[1];
+    magBias[2] = extMagBias[2];
+
+    magScale[0] = extMagScale[0];
+    magScale[1] = extMagScale[1];
+    magScale[2] = extMagScale[2];
+}
+
+void MPU9250::setGyroAccelCalib(float * extGyroBias, float * extAccelBias)
+{
+    gyroBias[0] = extGyroBias[0];
+    gyroBias[1] = extGyroBias[1];
+    gyroBias[2] = extGyroBias[2];
+
+    accelBias[0] = extAccelBias[0];
+    accelBias[1] = extAccelBias[1];
+    accelBias[2] = extAccelBias[2];
+}
+
 #pragma region bool MPU9250::isConnectedMPU9250()
 /* Check if MPU9250 is connected
 Input: /
@@ -122,8 +141,7 @@ Description: check if sensor is connected
 */
 bool MPU9250::isConnectedMPU9250()
 {
-    uint8_t c = 0;
-	readBytes(MPU9250_ADDRESS, WHO_AM_I_MPU9250, 1, &c);  
+	byte c = readByte(MPU9250_ADDRESS, WHO_AM_I_MPU9250);
 	LOG(3, "MPU9250 WHO AM I = %02X", c);
 	LOG(3, "Compare to  =  %02X", MPU9250_WHOAMI_DEFAULT_VALUE);
 	return (c == MPU9250_WHOAMI_DEFAULT_VALUE);
@@ -138,11 +156,10 @@ Description: check if magnetometer is connected
 */
 bool MPU9250::isConnectedAK8963()
 {
-    uint8_t c = 0;
-	readBytes(AK8963_ADDRESS, AK8963_WHO_AM_I, 1, &c);  
+	byte c = readByte(AK8963_ADDRESS, AK8963_WHO_AM_I);
 	LOG(3, "AK8963  WHO AM I = %02X", c);
-	LOG(3, "Compare to  =  %02X", 0xBC); //AK8963_WHOAMI_DEFAULT_VALUE);
-	return (c == 0xBC); //AK8963_WHOAMI_DEFAULT_VALUE);
+	LOG(3, "Compare to  =  %02X", AK8963_WHOAMI_DEFAULT_VALUE);
+	return (c == AK8963_WHOAMI_DEFAULT_VALUE);
 }
 #pragma endregion
 
@@ -197,10 +214,6 @@ bool MPU9250::update()
 
 }
 #pragma endregion
-
-void MPU9250::printData() {
-	LOG(0, "%d, %d, %d", (int)(a[0] * 1000), (int)(a[1] * 1000), (int)(a[2] * 1000));
-}
 
 #pragma region void MPU9250::updateAccelGyro()
 /* Update accelometer and gyro data
@@ -685,7 +698,7 @@ void MPU9250::magcalMPU9250(float * dest1, float * dest2)
 	int32_t mag_bias[3] = { 0, 0, 0 }, mag_scale[3] = { 0, 0, 0 };
 	int16_t mag_max[3] = { -32767, -32767, -32767 }, mag_min[3] = { 32767, 32767, 32767 }, mag_temp[3] = { 0, 0, 0 };
 
-	LOG(0, "Mag Calibration: Wave device in a figure eight until done!");
+	LOG(1, "Mag Calibration: Wave device in a figure eight until done!");
 	delay(4000);
 
 	// shoot for ~fifteen seconds of mag data
@@ -1082,99 +1095,65 @@ Description: write data to register. Report commuication errors.
 */
 void MPU9250::writeByte(uint8_t address, uint8_t subAddress, uint8_t data)
 {
-    if( _useSPI ){
-        _spi->beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3)); // begin the transaction
-        digitalWrite(_csPin,LOW); // select the MPU9250 chip
-        _spi->transfer(subAddress); // write the register address
-        _spi->transfer(data); // write the data
-        digitalWrite(_csPin,HIGH); // deselect the MPU9250 chip
-        _spi->endTransaction(); // end the transaction
-    }
-    else{
-        Wire.beginTransmission(address);  // Initialize the Tx buffer
-        Wire.write(subAddress);           // Put slave register address in Tx buffer
-        Wire.write(data);                 // Put data in Tx buffer
-        i2c_err_ = Wire.endTransmission();           // Send the Tx buffer
-        if (i2c_err_)
-        {
-            pirntI2CError();
-        }
-    }
+
+	Wire.beginTransmission(address);  // Initialize the Tx buffer
+	Wire.write(subAddress);           // Put slave register address in Tx buffer
+	Wire.write(data);                 // Put data in Tx buffer
+	i2c_err_ = Wire.endTransmission();           // Send the Tx buffer
+	if (i2c_err_)
+	{
+		pirntI2CError();
+	}
 }
 #pragma endregion
 
 #pragma region uint8_t MPU9250::readByte(uint8_t address, uint8_t subAddress)
 /* Read byte from register
 Input: uint8_t address - register adress
-uint8_t subAddress - slave register address
+	   uint8_t subAddress - slave register address
 Output: uint8_t data - byte data to read
 Description: read data from register. Report commuication errors.
 */
 uint8_t MPU9250::readByte(uint8_t address, uint8_t subAddress)
 {
-    uint8_t data = 0; // `data` will store the register data
-    if( _useSPI ){
-        // begin the transaction
-        _spi->beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
-        digitalWrite(_csPin,LOW); // select the MPU9250 chip
-        _spi->transfer(subAddress | SPI_READ); // specify the starting register address
-        data = _spi->transfer(0x00); // read the data
-        digitalWrite(_csPin,HIGH); // deselect the MPU9250 chip
-        _spi->endTransaction(); // end the transaction
-        return 1;
-    }
-    else {
-        Wire.beginTransmission(address);         // Initialize the Tx buffer
-        Wire.write(subAddress);	                 // Put slave register address in Tx buffer
-        i2c_err_ = Wire.endTransmission(false);        // Send the Tx buffer, but send a restart to keep connection alive
-        if (i2c_err_)
-        {
-            pirntI2CError();
-        }
-        Wire.requestFrom(address, (size_t)1);  // Read one byte from slave register address
-        if (Wire.available()) data = Wire.read();                      // Fill Rx buffer with result
-        return data;                             // Return data read from slave register
-    }
+	uint8_t data = 0; // `data` will store the register data
+	Wire.beginTransmission(address);         // Initialize the Tx buffer
+	Wire.write(subAddress);	                 // Put slave register address in Tx buffer
+	i2c_err_ = Wire.endTransmission(false);        // Send the Tx buffer, but send a restart to keep connection alive
+	if (i2c_err_)
+	{
+		pirntI2CError();
+	}
+	Wire.requestFrom(address, (size_t)1);  // Read one byte from slave register address
+	if (Wire.available()) data = Wire.read();                      // Fill Rx buffer with result
+	return data;                             // Return data read from slave register
 }
 #pragma endregion
 
 #pragma region void MPU9250::readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t * dest)
 /* Read multiple bytes from register
 Input: uint8_t address - register adress
-uint8_t subAddress - slave register address
-uint8_t cont - number of bytes to read
-uint8_t * dest - uint8_t[count] array to store read data
+	   uint8_t subAddress - slave register address
+	   uint8_t cont - number of bytes to read
+	   uint8_t * dest - uint8_t[count] array to store read data
 Output: /
 Description: read data from register. Report commuication errors.
 */
 void MPU9250::readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t * dest)
 {
-    if( _useSPI ){
-        // begin the transaction
-        _spi->beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
-        digitalWrite(_csPin,LOW); // select the MPU9250 chip
-        _spi->transfer(subAddress | 0x80); // specify the starting register address
-        for(uint8_t i = 0; i < count; i++){
-            dest[i] = _spi->transfer(0x00); // read the data
-        }
-        digitalWrite(_csPin,HIGH); // deselect the MPU9250 chip
-        _spi->endTransaction(); // end the transaction
-    }
-    else {
-        Wire.beginTransmission(address);   // Initialize the Tx buffer
-        Wire.write(subAddress);            // Put slave register address in Tx buffer
-        i2c_err_ = Wire.endTransmission(false);  // Send the Tx buffer, but send a restart to keep connection alive
-        if (i2c_err_)
-        {
-            pirntI2CError();
-        }
-        uint8_t i = 0;
-        Wire.requestFrom(address, count);  // Read bytes from slave register address
-        while (Wire.available())
-        {
-            dest[i++] = Wire.read();
-        } // Put read results in the Rx buffer
-    }
+	Wire.beginTransmission(address);   // Initialize the Tx buffer
+	Wire.write(subAddress);            // Put slave register address in Tx buffer
+	i2c_err_ = Wire.endTransmission(false);  // Send the Tx buffer, but send a restart to keep connection alive
+	if (i2c_err_)
+	{
+		pirntI2CError();
+	}
+	uint8_t i = 0;
+	Wire.requestFrom(address, count);  // Read bytes from slave register address
+	while (Wire.available())
+	{
+		dest[i++] = Wire.read();
+	} // Put read results in the Rx buffer
 }
 #pragma endregion
 

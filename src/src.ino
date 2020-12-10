@@ -10,10 +10,9 @@
 #include "status.h"
 #include "project_utils.h"
 #include "rf_testing.h"
-
 #include "MPU9250.h"
+#include "wave_analyser.h"
 
-MPU9250 mpu(SPI, PA11);
 
 #define debug
 #define serial_debug  Serial
@@ -22,6 +21,8 @@ MPU9250 mpu(SPI, PA11);
 // TimerMillis periodic;
 GNSSLocation gps_location;
 GNSSSatellites gps_satellites;
+
+WaveAnalyser wave; 
 
 /**
  * @brief called upon pin change
@@ -33,6 +34,16 @@ void accelerometer_callback(void){
     serial_debug.println(")");
   #endif*/
   gps_accelerometer_interrupt();
+}
+
+
+bool start_calibration = false;
+void calibration_interrupt()
+{
+    start_calibration = true;
+#ifdef serial_debug
+    serial_debug.println("calibration_interrupt");
+#endif
 }
 
 // Variable to track the reed switch status
@@ -213,15 +224,13 @@ bool state_check_timeout(void){
   }
   return false;
 }
-
+const int wdt_time = 18000;
 /**
  * @brief Setup function called on boot
  * 
  */
 void setup() {
   //STM32L0.deepsleep(60000); //limits the reboot continuous cycle from happening for any reason, likely low battery
-  // Watchdog
-  //STM32L0.wdtEnable(18000);
   analogReadResolution(12);
 
   pinMode(LED_RED,OUTPUT);
@@ -229,60 +238,66 @@ void setup() {
   delay(200);
   digitalWrite(LED_RED,LOW);
 
-#ifdef A_INT2
-  pinMode(A_INT2, INPUT);
-  attachInterrupt(digitalPinToInterrupt(A_INT2),accelerometer_callback,CHANGE);
-#endif
-
   // Serial port debug setup
-  #ifdef serial_debug
-    serial_debug.begin(115200);
-  #endif
-  #ifdef debug
-    serial_debug.print("setup(serial debug begin): ");
-    serial_debug.print("resetCause: ");
-    serial_debug.println(STM32L0.resetCause(),HEX);
-  #endif
+#ifdef serial_debug
+  serial_debug.begin(115200);
+#endif
+#ifdef debug
+  serial_debug.print("setup(serial debug begin): ");
+  serial_debug.print("resetCause: ");
+  serial_debug.println(STM32L0.resetCause(),HEX);
+#endif
 
 
   pinMode(PIN_WIRE_SCL,INPUT);
   delay(100);
   if(digitalRead(PIN_WIRE_SCL)==LOW){
-    //no I2C pull-up detected
-    bitSet(status_packet.data.system_functions_errors,3);
-    #ifdef debug
+      //no I2C pull-up detected
+      bitSet(status_packet.data.system_functions_errors,3);
+#ifdef debug
       serial_debug.println("ERROR(i2c)");
-    #endif
+#endif
   }
+
+#ifdef BUTTON
+    pinMode(BUTTON, INPUT);
+    attachInterrupt(digitalPinToInterrupt(BUTTON), calibration_interrupt, FALLING);
+#endif
+    // This is needed if we want ot communicate with anything that is
+    // connected to i2c that was meant for oled display.
+#ifdef OLED_MPU_I2C_EN
+    pinMode(OLED_MPU_I2C_EN, OUTPUT);
+    digitalWrite(OLED_MPU_I2C_EN, HIGH);
+#endif
+
+    Wire.begin();
+    wave.init();
+    wave.setup();
+#ifdef serial_debug
+    serial_debug.println("Entering 5 second delay, calibration possible");
+#endif
+
+    delay(5000);
+    if(start_calibration) {
+        detachInterrupt(digitalPinToInterrupt(BUTTON));
+        //STM32L0.wdtEnable(120000); // Two mins for calibration
+        wave.calibrate_mpu();
+        start_calibration = false;
+    }
+    detachInterrupt(digitalPinToInterrupt(BUTTON));
+    STM32L0.wdtEnable(wdt_time);  // Back to normal time
+    wave.read_cal_values_from_flash();
+
+
+#ifdef A_INT2
+  pinMode(A_INT2, INPUT);
+  attachInterrupt(digitalPinToInterrupt(A_INT2),accelerometer_callback,CHANGE);
+#endif
 
   // start the FSM with LoraWAN init
   // setup default settings
   settings_init();
   state = INIT;
-
-
-  mpu.setup();
-  mpu.calibrateAccelGyro(); //Public MPU9250 calibration function
-
-  delay(2000);
-  mpu.calibrateMag();
-  delay(2000); // add delay to see results before serial spew of data
-  Serial.println("Rest accelometer");
-  delay(5000);
-  mpu.calibrateAccelGyro();
-
-
-
-    while(1)
-    {
-        mpu.updateAccelGyro(); //Update accelometer and gyro data
-        mpu.updateMag();
-        mpu.printData();
-        delay(100);
-    }
-
-
-
 }
 
 /**

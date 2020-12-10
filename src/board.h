@@ -15,13 +15,9 @@
     #define ENABLE_DRIVER  LOW
     #define DISABLE_DRIVER  HIGH
     #define LED_RED PH0
-
-    //#define VSWR_ADC -1
-    //#define BAT_MON PA4
-    //#define BAT_MON_EN PH1 // reused for SD
-    //#define PULSE_OUT -1
-    //#define PULSE_IN -1
-    //#define INPUT_AN PA5
+    #define BUTTON PA5
+    #define CALIBRATION_OFFSET 0x0100 //Needed for writing cal values in eeprom
+    #define OLED_MPU_I2C_EN PA0
     float static input_calib[]={
         2.016,
         2.016,
@@ -56,15 +52,7 @@
         1.100928681,
         1.099782854
     };
-
-    //#define GPS_BCK PA8
-    //#define CHG_DISABLE PA11
-    //#define VSWR_EN PB5
     #define GPS_EN PB5
-    //#define A_INT2 PB2
-    //#define A_INT1 PB7
-    //#define LIGHT_EN PB14 // reused for SD card
-    //#define PIN_REED PH0
     #define BAT_MON_CALIB 1.14
 #endif
 

@@ -4,7 +4,6 @@
 
 #include <Arduino.h>
 #include <Wire.h> 
-#include <SPI.h>
 #include "MPU9250RegisterMap.h" //Register file
 #include "array_structures.h" //Quaternion and vector classes
 #include "debug_print.h"
@@ -20,10 +19,6 @@ enum Mscale { MFS_14BITS = 0, MFS_16BITS };
 
 class MPU9250
 {
-    SPIClass *_spi;
-    uint8_t _csPin;
-    bool _useSPI;
-
 	// Specify sensor full scale
 	uint8_t Gscale = GFS_250DPS;
 	uint8_t Ascale = AFS_2G;
@@ -66,9 +61,7 @@ class MPU9250
 
 public:
 
-    MPU9250(TwoWire &bus);
-    MPU9250(SPIClass &bus,uint8_t csPin);
-
+	MPU9250(); //Constructor
 	void setup(); //Setup function
 	void calibrateAccelGyro(); //Public MPU9250 calibration function
 	void calibrateMag(); //Public magnetometer calibration function
@@ -78,16 +71,16 @@ public:
 	void updateAccelGyro(); //Update accelometer and gyro data
 	void updateMag(); //Update magnetometer readings
 
-    void printRollPitchYaw();
-
 	int16_t getZacc(); //Get Z rotated acceleration
 	float getDt(); //Get Z rotated acceleration
 	void setDataDelay(int); //Re-set value of data delay
 
 	void MPU9250sleep(); //Go to sleep
 
-    void printData();
-
+    void getMagCalib(float * extMagBias, float * extMagScale);
+    void getGyroAccelCalib(float * extGyroBias, float * extAccelBias);
+    void setMagCalib(float * extMagBias, float * extMagScale);
+    void setGyroAccelCalib(float * extGyroBias, float * extAccelBias);
 
 private:
 	bool available(); //Is new data avaliable

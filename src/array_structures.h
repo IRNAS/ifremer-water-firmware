@@ -8,7 +8,7 @@
 #define _ARRAY_STRUCTURES_H_
 
 #include <math.h>
-#include "libFilter/filters.h" //Library including low pass filter
+#include <filters.h> //Library including low pass filter
 #include "debug_print.h" //Additional library for debug logging
 
 #define GRAV_CONSTANT 9.80665

@@ -213,15 +213,18 @@ for (i = 0; i < parsed_locations.length; i++)
 ```
 ## Calibration process
 
-To calibrate the gyroscope and accelerometer sensor, few steps must be completed.
+Calibration process is needed to calibrate the magnetometer, gyroscope, accelerometer sensor.
+Entering into calibration process is only possible 5 seconds after startup, after that is disabled.
+To turn on the device put in batteries and press *battery activate* button.
+Green LED will blink once.
 
-1. Press and hold either button 1 or button 2 until LED starts blinking, then release.
-2. Press either button 1 or button 2 once
+To enter calibration sequence afterwards follow steps below:
+
+1. Press and hold button 1 until LED starts blinking rapidly, then release. Led will turn off.
+2. Press either button 1 or once
 3. When the LED turns on, start moving the unit in figure 8 shape for 30s until the LED turns off
 4. Put the device on the flat surface.
-5. Press either button 1 or button 2 once and wait 10 seconds.
+5. Press button 1 once and wait 10 seconds.
 6. Led will then blink 3 times, which means that calibration procedure is complete.
 
-Upon correct calibration the device will return close to 0 wave height when rested at a flat surface.
-
-
+Calibration values are saved into devices EEPROM and are not erased at reset.

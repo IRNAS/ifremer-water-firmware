@@ -1,4 +1,24 @@
 #include "wave_analyser.h"
+#include "board.h"
+#include <EEPROM.h>
+
+#define debug
+#define serial_debug  Serial
+
+struct calibration_data_t{
+    float MagBias[3];
+    float MagScale[3];
+    float GyroBias[3];
+    float AccelBias[3];
+};
+
+union calibration_package_t{
+  calibration_data_t data;
+  uint8_t bytes[sizeof(calibration_data_t)];
+};
+
+calibration_package_t calibration_package;
+calibration_package_t calibration_package1;
 
 #pragma region WaveAnalyser::WaveAnalyser()
 /* WaveAnalyser constructor
@@ -88,6 +108,182 @@ void WaveAnalyser::setup() {
 #endif
 }
 #pragma endregion
+
+//## Calibration process
+//
+//To calibrate the gyroscope and accelerometer sensor, few steps must be completed.
+//
+//1. Press and hold button 1 until LED starts blinking rapidly, then release. Led will turn off.
+//2. Press either button 1 or once
+//3. When the LED turns on, start moving the unit in figure 8 shape for 30s until the LED turns off
+//4. Put the device on the flat surface.
+//5. Press button 1 once and wait 10 seconds.
+//6. Led will then blink 3 times, which means that calibration procedure is complete.
+//
+//Upon correct calibration the device will return close to 0 wave height when rested at a flat surface.
+void WaveAnalyser::calibrate_mpu()
+{
+
+    /* Keep checking for button press for 3 seconds, keep blinking*/
+    uint32_t started = millis();
+    bool three_sec_hold = false;
+
+    while(digitalRead(BUTTON) == LOW) {
+        if(millis() - started > 3000) {
+            three_sec_hold = true;
+            break;
+        }
+    }
+
+
+    if (!three_sec_hold) {
+        /* Did not hold for three seconds, end procedure early*/
+		serial_debug.println("Return early");
+        return;
+    }
+
+    while(digitalRead(BUTTON) == LOW) {
+        digitalWrite(LED_RED, LOW);
+        delay(150);
+        digitalWrite(LED_RED, HIGH);
+        delay(150);
+    }
+    digitalWrite(LED_RED, LOW);
+
+
+    while (1) {
+        if (digitalRead(BUTTON) == LOW) {
+        delay(100);
+        break;
+        }
+    }
+
+    while (1) {
+        if (digitalRead(BUTTON) == HIGH) {
+        delay(50);
+        break;
+        }
+    }
+
+    delay(2000);
+    serial_debug.println("Starting calibration procedure\n");
+    digitalWrite(LED_RED, HIGH);
+
+    mpu.calibrateMag();
+    digitalWrite(LED_RED, LOW);
+
+    while (1) {
+        if (digitalRead(BUTTON) == LOW) {
+        delay(100);
+        break;
+        }
+    }
+
+
+    while (1) {
+        if (digitalRead(BUTTON) == HIGH) {
+        delay(50);
+        break;
+        }
+    }
+    delay(5000);
+    serial_debug.println("Starting accle/gyro calibration procedure\n");
+    mpu.calibrateAccelGyro();
+
+    for (uint8_t i = 0; i < 3; i++) {
+        digitalWrite(LED_RED, HIGH);
+        delay(300);
+        digitalWrite(LED_RED, LOW);
+        delay(300);
+    } 
+    
+
+    serial_debug.println("Calibration values");
+
+    mpu.getMagCalib(calibration_package.data.MagBias, calibration_package.data.MagScale);
+    mpu.getGyroAccelCalib(calibration_package.data.GyroBias, calibration_package.data.AccelBias);
+
+#ifdef serial_debug
+    serial_debug.println("Done");
+    for (int i = 0; i<3; i++) {
+        serial_debug.println(calibration_package.data.MagBias[i]);
+    }
+    Serial.println();
+    for (int i = 0; i<3; i++) {
+        serial_debug.println(calibration_package.data.MagScale[i]);
+    }
+    Serial.println();
+    for (int i = 0; i<3; i++) {
+        serial_debug.println(calibration_package.data.GyroBias[i]);
+    }
+    Serial.println();
+    for (int i = 0; i<3; i++) {
+        serial_debug.println(calibration_package.data.AccelBias[i]);
+    }
+    serial_debug.println("");
+    serial_debug.println("Writing to flash");
+#endif 
+
+    // write calibration to flash
+    for(int i=0;i<sizeof(calibration_data_t);i++){
+        EEPROM.write(CALIBRATION_OFFSET + i, calibration_package.bytes[i]);
+        delay(10);  // Otherwise it crashes
+    }
+
+#ifdef serial_debug
+    serial_debug.println("Reading from flash");
+    // read calibration from flash
+    for(int i=0;i<sizeof(calibration_data_t);i++){
+        calibration_package.bytes[i] = EEPROM.read(CALIBRATION_OFFSET + i);
+        delay(10);  // Otherwise it crashes
+    }
+    for (int i = 0; i<3; i++) {
+        serial_debug.println(calibration_package.data.MagBias[i]);
+    }
+    serial_debug.println();
+    for (int i = 0; i<3; i++) {
+        serial_debug.println(calibration_package.data.MagScale[i]);
+    }
+    serial_debug.println();
+    for (int i = 0; i<3; i++) {
+        serial_debug.println(calibration_package.data.GyroBias[i]);
+    }
+    serial_debug.println();
+    for (int i = 0; i<3; i++) {
+        serial_debug.println(calibration_package.data.AccelBias[i]);
+    }
+    serial_debug.println("");
+#endif 
+}
+
+void WaveAnalyser::read_cal_values_from_flash()
+{
+    for(int i=0;i<sizeof(calibration_data_t);i++){
+        calibration_package.bytes[i] = EEPROM.read(CALIBRATION_OFFSET + i);
+        delay(10);  // Otherwise it crashes
+    }
+
+#ifdef serial_debug
+    for (int i = 0; i<3; i++) {
+        serial_debug.println(calibration_package.data.MagBias[i]);
+    }
+    serial_debug.println();
+    for (int i = 0; i<3; i++) {
+        serial_debug.println(calibration_package.data.MagScale[i]);
+    }
+    serial_debug.println();
+    for (int i = 0; i<3; i++) {
+        serial_debug.println(calibration_package.data.GyroBias[i]);
+    }
+    serial_debug.println();
+    for (int i = 0; i<3; i++) {
+        serial_debug.println(calibration_package.data.AccelBias[i]);
+    }
+    serial_debug.println("");
+#endif 
+    mpu.setMagCalib(calibration_package.data.MagBias, calibration_package.data.MagScale);
+    mpu.setGyroAccelCalib(calibration_package.data.GyroBias, calibration_package.data.AccelBias);
+}
 
 #pragma region bool WaveAnalyser::update()
 /* Update - get called every loop
