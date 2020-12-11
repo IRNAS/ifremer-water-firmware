@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <time.h>
 
-#define GPS_LOG_SIZE 400
+#define GPS_LOG_SIZE 10
 /*#define LIS2DH12_ADDR 0x19
 #define LIS2DW12_WHO_AM_I                    0x0FU
 #define LIS2DW12_CTRL1                       0x20U

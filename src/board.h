@@ -18,6 +18,8 @@
     #define BUTTON PA5
     #define CALIBRATION_OFFSET 0x0100 //Needed for writing cal values in eeprom
     #define OLED_MPU_I2C_EN PA0
+    #define BAT_MON PA4
+    //#define BAT_MON_EN PH1 // reused for SD
     float static input_calib[]={
         2.016,
         2.016,

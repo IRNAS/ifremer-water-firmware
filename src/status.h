@@ -63,6 +63,9 @@ struct statusData_t{
   uint8_t bme_temp;
   uint8_t bme_pressure;
   uint8_t bme_humid;
+  uint16_t significant_wh;
+  uint16_t average_wh;
+  uint16_t average_period;
 }__attribute__((packed));
 
 union statusPacket_t{

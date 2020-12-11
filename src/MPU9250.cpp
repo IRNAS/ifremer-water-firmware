@@ -192,6 +192,7 @@ bool MPU9250::update()
 
 	if (delt_t > 10) {
 
+
 		updateRPY();
 
 		Acc.x = a[0];
@@ -200,7 +201,16 @@ bool MPU9250::update()
 
 		Acc.rotate(&Q);
 
-		LOG(3, "%d, %d, %d, %d", sum, (int)(Acc.x * 1000), (int)(Acc.y * 1000), (int)(Acc.z * 1000));
+		//LOG(3, "%d, %d, %d, %d", sum, (int)(Acc.x * 1000), (int)(Acc.y * 1000), (int)(Acc.z * 1000));
+        //serial_debug.print("DEBUG: ");
+        //serial_debug.print(sum, 3);
+        //serial_debug.print(", ");
+        //serial_debug.print((Acc.x * 1000), 3);
+        //serial_debug.print(", ");
+        //serial_debug.print((Acc.y * 1000), 3);
+        //serial_debug.print(", ");
+        //serial_debug.print((Acc.z * 1000), 3);
+        //serial_debug.println();
 
 		count = millis();
 		sum_send = sum;
@@ -227,7 +237,6 @@ void MPU9250::updateAccelGyro()
 {
 	int16_t MPU9250Data[7]; // used to read all 14 bytes at once from the MPU9250 accel/gyro
 	readMPU9250Data(MPU9250Data); // INT cleared on any read
-
 								  // Now we'll calculate the accleration value into actual g's
 	a[0] = (float)MPU9250Data[0] * aRes - accelBias[0];  // get actual g value, this depends on scale being set
 	a[1] = (float)MPU9250Data[1] * aRes - accelBias[1];

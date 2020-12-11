@@ -13,14 +13,16 @@
 
 #define GRAV_CONSTANT 9.80665
 
-class MotionArray {
-public:
+//#define serial_debug Serial
 
-	int16_t *x; //Variable size array
+class MotionArray {
+
+public:
+    int16_t * x_array; //Variable size array
 	float dt; //Time interval
 	float d_last = 0.0;
 
-	Filter *filter; //Low pass filter
+    Filter * filter;
 
 	int N; //Length of array
 	int N_gradient; //Length of gradient calculation
@@ -43,12 +45,12 @@ public:
 		N_gradient = n_grad;
 		if (N_gradient > (int)(N / 5)) { N_gradient = (int)(N / 5); } //Define the range of gradient
 
+		x_array = (int16_t *)malloc((N)*sizeof(int16_t));
 
-		x = (int16_t *)malloc((N)*sizeof(int16_t));
 		dt = 0.0;
 		for (int i = 1; i < N; i++)
 		{
-			x[i] = 0;
+			x_array[i] = 0;
 		}
 
 		//Initialize filter
@@ -58,6 +60,7 @@ public:
 		else if (order == 3) { ord = IIR::ORDER::OD3; }
 		else if (order == 4) { ord = IIR::ORDER::OD4; }
 		else { ord = IIR::ORDER::OD3; }
+		//IIR::TYPE lowpass = IIR::TYPE::LOWPASS; //Low pass filter order
 
 		filter = new Filter(cutoff_freq, sampling_time, ord); //Define low-pass filter
 	}
@@ -72,7 +75,7 @@ public:
 	void Init() {
 		for (int i = 1; i < N; i++)
 		{
-			x[i] = 0;
+			x_array[i] = 0;
 		}
 		d_last = 0.0;
 		pos = 0;
@@ -94,7 +97,21 @@ public:
 	//Add new element - return gradient of calculation element
 	bool AddElement(int16_t _x, float _dt) {
 		
-		x[pos] = _x; //Add element at the next position
+        //for (int i = 0; i < 600; i++) {
+        //    x_array[i] = i;
+        //    serial_debug.print("x_array[i]: ");
+        //    serial_debug.println(x_array[i]);
+        //    serial_debug.print("i: ");
+        //    serial_debug.println(i);
+        //    
+        //}
+		x_array[pos] = _x; //Add element at the next position
+        //serial_debug.print("_x: ");
+        //serial_debug.println(_x);
+        //serial_debug.print("x_array[pos]: ");
+        //serial_debug.println(x_array[pos]);
+        //serial_debug.print("pos: ");
+        //serial_debug.println(pos);
 		dt += _dt;
 		pos = (pos + 1) % N;
 
@@ -121,12 +138,29 @@ public:
 
 		pos = 0;
 		dt /= N; //Calculate average period
-		LOG(1, "DT: %.6f", dt);
+		//LOG(1, "DT: %.6f", dt);
+#ifdef serial_debug
+        serial_debug.print("DT: ");
+        serial_debug.print(dt, 6);
+#endif
 		//Adjust filter sampling time?
 		for (int i = 0; i < N; i++) {
-			int16_t tmp = x[i];
-			x[i] = (int16_t) filter->filterIn((float) x[i]);
-			LOG(2, ", %.6f, %d, %d", dt, tmp, x[i]);
+			int16_t tmp = x_array[i];
+
+            float tmpf = filter->filterIn((float) x_array[i]);
+            x_array[i] = (int16_t) tmpf;
+#ifdef serial_debug
+            serial_debug.print("DT: ");
+            serial_debug.print(dt, 6);
+            serial_debug.print(", ");
+            serial_debug.print(tmp);
+            serial_debug.print(", ");
+            serial_debug.print(tmpf);
+            serial_debug.print(", ");
+            serial_debug.print(x_array[i]);
+            serial_debug.println();
+#endif
+		//LOG(2, "%.6f, %d, %d", dt, tmp, x_array[i]);
 		}
 	}
 #pragma endregion
@@ -150,7 +184,7 @@ public:
 
 			float relative_pos = (float)(i - start) / (float)(end - start);
 			float offset = ((1.0 - relative_pos) * (float)offset1 + relative_pos * (float)offset2);
-			v += dt * (((float)x[i] - offset) * GRAV_CONSTANT / 1000.0f); //Update velocity
+			v += dt * (((float)x_array[i] - offset) * GRAV_CONSTANT / 1000.0f); //Update velocity
 			d += dt * v; //Update displacement
 			d_last += dt * v;
 		}
@@ -168,7 +202,7 @@ public:
 
 #pragma region int16_t getElement(int i)
 	int16_t getElement(int i) {
-		return x[i];
+		return x_array[i];
 	}
 #pragma endregion
 
@@ -186,7 +220,7 @@ public:
 		//Determine positions of gradient calculation
 		int i_min = max(0, i - N_gradient); //Position of the first element
 		int	i_max = min(N - 1, i + N_gradient); //position of the second element
-		float grad = (float)(x[i_max] - x[i_min]); //Gradient calculation (non-scaled!)
+		float grad = (float)(x_array[i_max] - x_array[i_min]); //Gradient calculation (non-scaled!)
 
 		//Return gradient
 		if (grad > 0.0) {

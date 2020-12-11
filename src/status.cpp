@@ -2,9 +2,11 @@
 #include <ponsel_sensor.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
+#include "wave_analyser.h"
 
 uint8_t resetCause = 0xff;
 Adafruit_BME280 bme; // comm over I2C
+extern WaveAnalyser wave; 
 
 #define debug
 #define serial_debug Serial
@@ -223,6 +225,10 @@ void status_init(void){
     serial_debug.println("Optod not present");
 #endif
   }
+
+#ifdef serial_debug
+    serial_debug.println("Initing Wave analyzer");
+#endif
 }
 
 /**
@@ -239,10 +245,10 @@ void status_measure_voltage(){
     digitalWrite(CHG_DISABLE, HIGH);
 #endif // CHG_DISABLE
 float stm32l0_battery = 0;
-#ifdef BAT_MON_EN
+#ifdef BAT_MON
   // measure battery voltage
-  pinMode(BAT_MON_EN, OUTPUT);
-  digitalWrite(BAT_MON_EN, HIGH);
+  //pinMode(BAT_MON_EN, OUTPUT);
+  //digitalWrite(BAT_MON_EN, HIGH);
   delay(1);
   float value = 0;
   for(int i=0; i<16; i++){
@@ -251,7 +257,7 @@ float stm32l0_battery = 0;
   }
   stm32l0_battery = BAT_MON_CALIB * (value/16) * (2500/stm32l0_vdd);// result in mV
   stm32l0_battery=(stm32l0_battery-2500)/10;
-  digitalWrite(BAT_MON_EN, LOW);
+  //digitalWrite(BAT_MON_EN, LOW);
 #endif //BAT_MON_EN
 
 #ifdef debug
@@ -382,6 +388,52 @@ boolean status_send(void){
     serial_debug.println(" )");
   #endif
 
+#ifdef OLED_MPU_I2C_EN
+    pinMode(OLED_MPU_I2C_EN, OUTPUT);
+    digitalWrite(OLED_MPU_I2C_EN, HIGH);
+#endif
+
+    // Start analysing waves only after first three status sends
+    static uint8_t first_three_messages = 0;
+    if (first_three_messages >= 3) {
+        wave.read_cal_values_from_flash();
+        wave.setup();
+        // block while the wave function performs and call it periodically
+        while(wave.update()==false) {
+            STM32L0.wdtReset();
+        }
+
+#ifdef OLED_MPU_I2C_EN
+        digitalWrite(OLED_MPU_I2C_EN, LOW);
+#endif
+
+#ifdef debug
+        serial_debug.println("Working, values are:");
+        serial_debug.print("SignificantWave: ");
+        serial_debug.println(wave.getSignificantWave() * 1000);
+        serial_debug.print("AverageWave: ");
+        serial_debug.println(wave.getAverageWave() * 1000);
+        serial_debug.print("AverageWavePeriod: ");
+        serial_debug.println(wave.getAveragePeriod() * 1000);
+#endif
+
+        // We ignore output values from wave object, if period is negative,
+        // as this is invalid.
+        if ((wave.getAveragePeriod() * 1000) < 0) {
+            status_packet.data.significant_wh =  0;
+            status_packet.data.average_wh =      0;
+            status_packet.data.average_period =  0;
+        } 
+        else { 
+            status_packet.data.significant_wh =  (uint16_t)(wave.getSignificantWave() * 1000); //height in mm
+            status_packet.data.average_wh =      (uint16_t)(wave.getAverageWave() * 1000); //height in mm
+            status_packet.data.average_period =  (uint16_t)(wave.getAveragePeriod() * 1000); //period in us
+        }
+    }
+    else {
+        first_three_messages++;
+    }
+    
   return lorawan_send(status_packet_port, &status_packet.bytes[0], sizeof(statusData_t));
 }
 

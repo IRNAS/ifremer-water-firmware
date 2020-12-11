@@ -95,6 +95,7 @@ inline float_t Filter::computeLowPass(float_t input) {
     u[i] = u[i-1];
   }
 
+    Serial.println("Computing lowpass: ");
   switch((uint8_t)od) {
     case (uint8_t)ORDER::OD1:
         y[0] = k1*y[1] + k0*input;

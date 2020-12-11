@@ -18,7 +18,6 @@ union calibration_package_t{
 };
 
 calibration_package_t calibration_package;
-calibration_package_t calibration_package1;
 
 #pragma region WaveAnalyser::WaveAnalyser()
 /* WaveAnalyser constructor
@@ -111,7 +110,12 @@ void WaveAnalyser::setup() {
 
 //## Calibration process
 //
-//To calibrate the gyroscope and accelerometer sensor, few steps must be completed.
+//Calibration process is needed to calibrate the magnetometer, gyroscope, accelerometer sensor.
+//Entering into calibration process is only possible 5 seconds after startup, after that is disabled.
+//To turn on the device put in batteries and press *battery activate* button.
+//Green LED will blink once.
+//
+//To enter calibration sequence afterwards follow steps below:
 //
 //1. Press and hold button 1 until LED starts blinking rapidly, then release. Led will turn off.
 //2. Press either button 1 or once
@@ -120,7 +124,7 @@ void WaveAnalyser::setup() {
 //5. Press button 1 once and wait 10 seconds.
 //6. Led will then blink 3 times, which means that calibration procedure is complete.
 //
-//Upon correct calibration the device will return close to 0 wave height when rested at a flat surface.
+//Calibration values are saved into devices EEPROM and are not erased at reset.
 void WaveAnalyser::calibrate_mpu()
 {
 
@@ -166,7 +170,9 @@ void WaveAnalyser::calibrate_mpu()
     }
 
     delay(2000);
+#ifdef serial_debug
     serial_debug.println("Starting calibration procedure\n");
+#endif
     digitalWrite(LED_RED, HIGH);
 
     mpu.calibrateMag();
@@ -187,7 +193,9 @@ void WaveAnalyser::calibrate_mpu()
         }
     }
     delay(5000);
+#ifdef serial_debug
     serial_debug.println("Starting accle/gyro calibration procedure\n");
+#endif
     mpu.calibrateAccelGyro();
 
     for (uint8_t i = 0; i < 3; i++) {
@@ -197,31 +205,37 @@ void WaveAnalyser::calibrate_mpu()
         delay(300);
     } 
     
-
-    serial_debug.println("Calibration values");
-
     mpu.getMagCalib(calibration_package.data.MagBias, calibration_package.data.MagScale);
     mpu.getGyroAccelCalib(calibration_package.data.GyroBias, calibration_package.data.AccelBias);
 
 #ifdef serial_debug
-    serial_debug.println("Done");
+    serial_debug.println("Calibrated values:");
+    serial_debug.print("MagBias: ");
     for (int i = 0; i<3; i++) {
-        serial_debug.println(calibration_package.data.MagBias[i]);
+        serial_debug.print(calibration_package.data.MagBias[i]);
+        serial_debug.print(" ");
     }
     Serial.println();
+    serial_debug.print("MagScale: ");
     for (int i = 0; i<3; i++) {
-        serial_debug.println(calibration_package.data.MagScale[i]);
+        serial_debug.print(calibration_package.data.MagScale[i]);
+        serial_debug.print(" ");
     }
     Serial.println();
+    serial_debug.print("GyroBias: ");
     for (int i = 0; i<3; i++) {
-        serial_debug.println(calibration_package.data.GyroBias[i]);
+        serial_debug.print(calibration_package.data.GyroBias[i]);
+        serial_debug.print(" ");
     }
     Serial.println();
+    serial_debug.print("AccelBias: ");
     for (int i = 0; i<3; i++) {
-        serial_debug.println(calibration_package.data.AccelBias[i]);
+        serial_debug.print(calibration_package.data.AccelBias[i]);
+        serial_debug.print(" ");
     }
     serial_debug.println("");
-    serial_debug.println("Writing to flash");
+    serial_debug.println("\nWriting calibration values to flash");
+    delay(10);  // Otherwise last line gets garbled
 #endif 
 
     // write calibration to flash
@@ -237,20 +251,29 @@ void WaveAnalyser::calibrate_mpu()
         calibration_package.bytes[i] = EEPROM.read(CALIBRATION_OFFSET + i);
         delay(10);  // Otherwise it crashes
     }
+    serial_debug.println("Calibrated values read from flash:");
+    serial_debug.print("MagBias: ");
     for (int i = 0; i<3; i++) {
-        serial_debug.println(calibration_package.data.MagBias[i]);
+        serial_debug.print(calibration_package.data.MagBias[i]);
+        serial_debug.print(" ");
     }
-    serial_debug.println();
+    Serial.println();
+    serial_debug.print("MagScale: ");
     for (int i = 0; i<3; i++) {
-        serial_debug.println(calibration_package.data.MagScale[i]);
+        serial_debug.print(calibration_package.data.MagScale[i]);
+        serial_debug.print(" ");
     }
-    serial_debug.println();
+    Serial.println();
+    serial_debug.print("GyroBias: ");
     for (int i = 0; i<3; i++) {
-        serial_debug.println(calibration_package.data.GyroBias[i]);
+        serial_debug.print(calibration_package.data.GyroBias[i]);
+        serial_debug.print(" ");
     }
-    serial_debug.println();
+    Serial.println();
+    serial_debug.print("AccelBias: ");
     for (int i = 0; i<3; i++) {
-        serial_debug.println(calibration_package.data.AccelBias[i]);
+        serial_debug.print(calibration_package.data.AccelBias[i]);
+        serial_debug.print(" ");
     }
     serial_debug.println("");
 #endif 
@@ -264,20 +287,28 @@ void WaveAnalyser::read_cal_values_from_flash()
     }
 
 #ifdef serial_debug
+    serial_debug.print("MagBias: ");
     for (int i = 0; i<3; i++) {
-        serial_debug.println(calibration_package.data.MagBias[i]);
+        serial_debug.print(calibration_package.data.MagBias[i]);
+        serial_debug.print(" ");
     }
-    serial_debug.println();
+    Serial.println();
+    serial_debug.print("MagScale: ");
     for (int i = 0; i<3; i++) {
-        serial_debug.println(calibration_package.data.MagScale[i]);
+        serial_debug.print(calibration_package.data.MagScale[i]);
+        serial_debug.print(" ");
     }
-    serial_debug.println();
+    Serial.println();
+    serial_debug.print("GyroBias: ");
     for (int i = 0; i<3; i++) {
-        serial_debug.println(calibration_package.data.GyroBias[i]);
+        serial_debug.print(calibration_package.data.GyroBias[i]);
+        serial_debug.print(" ");
     }
-    serial_debug.println();
+    Serial.println();
+    serial_debug.print("AccelBias: ");
     for (int i = 0; i<3; i++) {
-        serial_debug.println(calibration_package.data.AccelBias[i]);
+        serial_debug.print(calibration_package.data.AccelBias[i]);
+        serial_debug.print(" ");
     }
     serial_debug.println("");
 #endif 
@@ -299,12 +330,18 @@ Description:
 bool WaveAnalyser::update() {
 
 	if (mpu.update()) {
+    //        int16_t z_axis = mpu.getZacc();
+	//		bool full = A->AddElement(z_axis, mpu.getDt()); //Add new acceleration value and time interval
+	//		LOG(1, "Z axis: %d", z_axis);
+    //}
+    //return false;
 
 		//Check if waiting period is done
 		if (millis() - wait_time > calibration_delay)
 		{
-			bool full = A->AddElement(mpu.getZacc(), mpu.getDt()); //Add new acceleration value and time interval
-
+            int16_t z_axis = mpu.getZacc();
+			bool full = A->AddElement(z_axis, mpu.getDt()); //Add new acceleration value and time interval
+			//LOG(1, "Z axis: %d", z_axis);
 			//LOG(1, "%d, %d, %d, %d, %d, %d", mpu.getDt(), mpu.getZacc(), A_raw->GetTimeInterval(), A_raw->UpdateAverage(), A->GetTimeInterval(), grad);
 		
 			if (full) {
@@ -562,7 +599,8 @@ bool WaveAnalyser::analyseWaves() {
 		else {
 			//Repeat scanning
 			init(); //Initialize
-			LOG(1, "Array not full.");
+			LOG(1, "Array not full, number of waves: ");
+			LOG(1, "%d", wave_counter);
 #ifdef SD_CARD
 			logfile = SD.open(filename, FILE_APPEND);
 			logfile.print("Array not full, number of waves: ");

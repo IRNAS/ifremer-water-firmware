@@ -271,6 +271,7 @@ void setup() {
 #endif
 
     Wire.begin();
+    delay(100); //Short delay is needed, otherwise MPU inti fails
     wave.init();
     wave.setup();
 #ifdef serial_debug
@@ -286,8 +287,6 @@ void setup() {
     }
     detachInterrupt(digitalPinToInterrupt(BUTTON));
     STM32L0.wdtEnable(wdt_time);  // Back to normal time
-    wave.read_cal_values_from_flash();
-
 
 #ifdef A_INT2
   pinMode(A_INT2, INPUT);
@@ -298,6 +297,24 @@ void setup() {
   // setup default settings
   settings_init();
   state = INIT;
+
+  // Below snippet is used for debugging purposes
+  //wave.setup();
+  //// block while the wave function performs and call it periodically
+  //while(wave.update()==false) {
+  //  STM32L0.wdtReset();
+  //}
+  //  serial_debug.println("Working, values are:");
+  //  serial_debug.print("SignificantWave: ");
+  //  serial_debug.println(wave.getSignificantWave() * 1000);
+  //  serial_debug.print("AverageWave: ");
+  //  serial_debug.println(wave.getAverageWave() * 1000);
+  //  serial_debug.print("AverageWavePeriod: ");
+  //  serial_debug.println(wave.getAveragePeriod() * 1000);
+
+    //packet.sensor.significant_wh = (uint16_t)(wave.getSignificantWave() * 1000); //height in mm
+    //packet.sensor.average_wh = (uint16_t)(wave.getAverageWave() * 1000); //height in mm
+    //packet.sensor.average_period = (uint16_t)(wave.getAveragePeriod() * 1000); //period in us
 }
 
 /**
