@@ -42,7 +42,8 @@ public:
 	float getAveragePeriod();
     void calibrate_mpu();
     void read_cal_values_from_flash();
-
+    void mpu_sleep();
+    void mpu_wakeup();
 private:
 
 	MPU9250 mpu; //MPU9250 sensor

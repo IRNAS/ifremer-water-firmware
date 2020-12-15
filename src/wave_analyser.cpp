@@ -316,6 +316,16 @@ void WaveAnalyser::read_cal_values_from_flash()
     mpu.setGyroAccelCalib(calibration_package.data.GyroBias, calibration_package.data.AccelBias);
 }
 
+void WaveAnalyser::mpu_sleep()
+{
+    mpu.MPU9250sleep();
+}
+
+void WaveAnalyser::mpu_wakeup()
+{
+    mpu.MPU9250wakeup();
+}
+
 #pragma region bool WaveAnalyser::update()
 /* Update - get called every loop
 Input: /

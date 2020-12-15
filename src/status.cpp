@@ -1,7 +1,7 @@
 #include "status.h"
 #include <ponsel_sensor.h>
 #include <Adafruit_Sensor.h>
-#include <Adafruit_BME280.h>
+#include <low_power_Adafruit_BME280.h>
 #include "wave_analyser.h"
 
 uint8_t resetCause = 0xff;
@@ -152,7 +152,7 @@ serial_debug.println(" )");
  */
 void status_init(void){ 
     event_status_last=millis();
-    status_accelerometer_init();
+    //status_accelerometer_init();
     #ifdef debug
         serial_debug.print("status_init - status_timer_callback( ");
         serial_debug.print("interval: ");
@@ -198,7 +198,22 @@ void status_init(void){
 #endif 
     }
 
+#ifdef GPS_EN
+    pinMode(GPS_EN, OUTPUT);
+    digitalWrite(GPS_EN, LOW);
+#endif
+
+    //serial_debug.println("DEEPSLEEP");
+    //STM32L0.deepsleep(10000);
+
+
   // Needed for communication with ponsel sensors
+    // Make sure that water sensors are turned on
+#ifdef BOOST_EN
+    pinMode(BOOST_EN, OUTPUT);
+    digitalWrite(BOOST_EN, HIGH);
+#endif
+
 #ifdef serial_debug
     serial_debug.println("Checking for ponsel sensors...");
 #endif
@@ -226,8 +241,15 @@ void status_init(void){
 #endif
   }
 
-#ifdef serial_debug
-    serial_debug.println("Initing Wave analyzer");
+  // Turn off both boost and driver_en, driver_en is in wrong state after every
+  // communication.
+#ifdef BOOST_EN
+    digitalWrite(BOOST_EN, LOW);
+#endif
+
+#ifdef DRIVER_EN
+    pinMode(DRIVER_EN, OUTPUT);
+    digitalWrite(DRIVER_EN, LOW);
 #endif
 }
 
@@ -345,6 +367,10 @@ boolean status_send(void){
         status_packet.data.bme_humid =      (uint8_t) get_bits(bme.readHumidity(), 0, 100, 8);
     }
 
+#ifdef BOOST_EN
+    pinMode(BOOST_EN, OUTPUT);
+    digitalWrite(BOOST_EN, HIGH);
+#endif
     struct measurements values;
     if (ctzn_present)
     {
@@ -375,6 +401,16 @@ boolean status_send(void){
         }
     }
 
+    // Turn off both pins, driver en takes some current
+#ifdef BOOST_EN
+    digitalWrite(BOOST_EN, LOW);
+#endif
+
+#ifdef DRIVER_EN
+    pinMode(DRIVER_EN, OUTPUT);
+    digitalWrite(DRIVER_EN, LOW);
+#endif
+
   #ifdef debug
     serial_debug.print("status_send( ");
     serial_debug.print("resetCause: ");
@@ -388,24 +424,17 @@ boolean status_send(void){
     serial_debug.println(" )");
   #endif
 
-#ifdef OLED_MPU_I2C_EN
-    pinMode(OLED_MPU_I2C_EN, OUTPUT);
-    digitalWrite(OLED_MPU_I2C_EN, HIGH);
-#endif
 
     // Start analysing waves only after first three status sends
     static uint8_t first_three_messages = 0;
     if (first_three_messages >= 3) {
-        wave.read_cal_values_from_flash();
+        wave.mpu_wakeup();
         wave.setup();
+        wave.read_cal_values_from_flash();
         // block while the wave function performs and call it periodically
         while(wave.update()==false) {
             STM32L0.wdtReset();
         }
-
-#ifdef OLED_MPU_I2C_EN
-        digitalWrite(OLED_MPU_I2C_EN, LOW);
-#endif
 
 #ifdef debug
         serial_debug.println("Working, values are:");
@@ -429,11 +458,11 @@ boolean status_send(void){
             status_packet.data.average_wh =      (uint16_t)(wave.getAverageWave() * 1000); //height in mm
             status_packet.data.average_period =  (uint16_t)(wave.getAveragePeriod() * 1000); //period in us
         }
+        wave.mpu_sleep();
     }
     else {
         first_three_messages++;
     }
-    
   return lorawan_send(status_packet_port, &status_packet.bytes[0], sizeof(statusData_t));
 }
 

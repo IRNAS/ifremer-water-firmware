@@ -76,6 +76,7 @@ public:
 	void setDataDelay(int); //Re-set value of data delay
 
 	void MPU9250sleep(); //Go to sleep
+    void MPU9250wakeup();
 
     void getMagCalib(float * extMagBias, float * extMagScale);
     void getGyroAccelCalib(float * extGyroBias, float * extAccelBias);

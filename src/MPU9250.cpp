@@ -289,7 +289,33 @@ void MPU9250::MPU9250sleep() {
 	writeByte(AK8963_ADDRESS, AK8963_CNTL, 0x00);
 	delay(100);
 	//Serial1.print("Sleep!");
+    
+   
+    uint8_t temp = 0;
+    temp = readByte(AK8963_ADDRESS, AK8963_CNTL);
+    writeByte(AK8963_ADDRESS, AK8963_CNTL, temp & ~(0x0F) ); // Clear bits 0 - 3 to power down magnetometer
+    temp = readByte(MPU9250_ADDRESS, PWR_MGMT_1);
+    writeByte(MPU9250_ADDRESS, PWR_MGMT_1, temp | 0x10);     // Write bit 4 to enable gyro standby
+    delay(10); // Wait for all registers to reset
 }
+
+
+void MPU9250::MPU9250wakeup()
+{
+  // Clear sleep bit to wake MPU9250
+  uint8_t c = readByte(MPU9250_ADDRESS, PWR_MGMT_1);
+  writeByte(MPU9250_ADDRESS, PWR_MGMT_1, c & ~(0x40) ); // Clear sleep mode bit (6), enable all sensors
+  delay(100); // Wait for all registers to reset
+
+  uint8_t temp = 0;
+  temp = readByte(AK8963_ADDRESS, AK8963_CNTL);
+  //writeByte(AK8963_ADDRESS, AK8963_CNTL, temp | _Mmode ); // Reset normal mode for  magnetometer
+  writeByte(AK8963_ADDRESS, AK8963_CNTL, Mscale << 4 | Mmode); // Set magnetometer data resolution and sample ODR
+  temp = readByte(MPU9250_ADDRESS, PWR_MGMT_1);
+  writeByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x01);   // return gyro and accel normal mode
+  delay(10); // Wait for all registers to reset
+}
+
 
 /* PRIVATE METHODS */
 

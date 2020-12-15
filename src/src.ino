@@ -248,7 +248,6 @@ void setup() {
   serial_debug.println(STM32L0.resetCause(),HEX);
 #endif
 
-
   pinMode(PIN_WIRE_SCL,INPUT);
   delay(100);
   if(digitalRead(PIN_WIRE_SCL)==LOW){
@@ -259,12 +258,19 @@ void setup() {
 #endif
   }
 
+#ifdef GPS_EN
+    pinMode(GPS_EN, OUTPUT);
+    digitalWrite(GPS_EN, LOW);
+#endif
+
 #ifdef BUTTON
     pinMode(BUTTON, INPUT);
     attachInterrupt(digitalPinToInterrupt(BUTTON), calibration_interrupt, FALLING);
 #endif
     // This is needed if we want ot communicate with anything that is
     // connected to i2c that was meant for oled display.
+    // We dont not turn this of ever, we are putting MPU accel to sleep when 
+    // we need to.
 #ifdef OLED_MPU_I2C_EN
     pinMode(OLED_MPU_I2C_EN, OUTPUT);
     digitalWrite(OLED_MPU_I2C_EN, HIGH);
@@ -287,7 +293,14 @@ void setup() {
     }
     detachInterrupt(digitalPinToInterrupt(BUTTON));
     STM32L0.wdtEnable(wdt_time);  // Back to normal time
+    wave.mpu_sleep();
 
+    // Make sure that water sensors are turned off
+#ifdef BOOST_EN
+    pinMode(BOOST_EN, OUTPUT);
+    digitalWrite(BOOST_EN, LOW);
+#endif
+    
 #ifdef A_INT2
   pinMode(A_INT2, INPUT);
   attachInterrupt(digitalPinToInterrupt(A_INT2),accelerometer_callback,CHANGE);
@@ -297,6 +310,9 @@ void setup() {
   // setup default settings
   settings_init();
   state = INIT;
+
+  // If put in sleep mode herre consumption is 130 uA.
+  //STM32L0.deepsleep(115200);
 
   // Below snippet is used for debugging purposes
   //wave.setup();
@@ -421,7 +437,7 @@ void loop() {
     status_init(); // currently does not report a fail, should not be possible anyhow
     // Accelerometer
     //accelerometer_init();
-    status_accelerometer_init(); 
+    //status_accelerometer_init(); 
     #ifdef debug
       if(bitRead(status_packet.data.system_functions_errors,3)){
         serial_debug.println("ERROR(accel)");
@@ -449,6 +465,7 @@ void loop() {
     state_transition(IDLE);
     break;
   case IDLE:
+
     // defaults for timing out
     state_timeout_duration=25*60*60*1000; // 25h maximum
     state_goto_timeout=INIT;
@@ -562,6 +579,13 @@ void loop() {
         state_transition(IDLE);
       }
       else{
+
+        // For some reason this pin is high after exiting GPS read, we need to
+        // turn it off, otherwise the consumption is too high
+#ifdef DRIVER_EN
+    pinMode(DRIVER_EN, OUTPUT);
+    digitalWrite(DRIVER_EN, LOW);
+#endif
         state_transition(GPS_SEND);
       }
     }

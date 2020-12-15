@@ -29,8 +29,8 @@ void settings_init(void){
     settings_packet.data.system_status_interval=10;
     settings_packet.data.system_functions=0xff;
     settings_packet.data.lorawan_datarate_adr=3;
-    settings_packet.data.gps_periodic_interval=5;
-    settings_packet.data.gps_triggered_interval=0;
+    settings_packet.data.gps_periodic_interval=2;
+    settings_packet.data.gps_triggered_interval=2;
     settings_packet.data.gps_triggered_threshold=0x0f;
     settings_packet.data.gps_triggered_duration=0x0f;
     settings_packet.data.gps_cold_fix_timeout=60;
