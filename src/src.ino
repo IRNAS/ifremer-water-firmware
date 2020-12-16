@@ -284,7 +284,7 @@ void setup() {
     serial_debug.println("Entering 5 second delay, calibration possible");
 #endif
 
-    delay(5000);
+    //delay(5000);
     if(start_calibration) {
         detachInterrupt(digitalPinToInterrupt(BUTTON));
         //STM32L0.wdtEnable(120000); // Two mins for calibration
@@ -583,8 +583,8 @@ void loop() {
         // For some reason this pin is high after exiting GPS read, we need to
         // turn it off, otherwise the consumption is too high
 #ifdef DRIVER_EN
-    pinMode(DRIVER_EN, OUTPUT);
-    digitalWrite(DRIVER_EN, LOW);
+    //pinMode(DRIVER_EN, OUTPUT);
+    //digitalWrite(DRIVER_EN, LOW);
 #endif
         state_transition(GPS_SEND);
       }

@@ -19,7 +19,7 @@
 #define N_GRAD_COUNT 20 //Number of points with the same gradient to consider as new direction
 #define N_WAVES_MAX 10 //Max number of waves to calculate - defines array length (increase if needed)
 #define N_WAVES 5 //Initial number of waves to calculate - can be adjusted by the user
-#define INNITAL_CALIBRATION_DELAY 30000 //Delay for quaternions calculations to calibrate
+#define INNITAL_CALIBRATION_DELAY 5000 //Delay for quaternions calculations to calibrate
 
 //#define SD_CARD //If using ESP32 and want to use SD card logging uncomment
 

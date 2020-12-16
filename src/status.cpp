@@ -251,6 +251,7 @@ void status_init(void){
     pinMode(DRIVER_EN, OUTPUT);
     digitalWrite(DRIVER_EN, LOW);
 #endif
+
 }
 
 /**
@@ -427,7 +428,14 @@ boolean status_send(void){
 
     // Start analysing waves only after first three status sends
     static uint8_t first_three_messages = 0;
-    if (first_three_messages >= 3) {
+    if (first_three_messages >= 10) {
+
+    // lora_init for some reason pulls down this pin, to prevent this we pull 
+    // it up everytime we watn to use accel
+#ifdef OLED_MPU_I2C_EN
+    pinMode(OLED_MPU_I2C_EN, OUTPUT);
+    digitalWrite(OLED_MPU_I2C_EN, HIGH);
+#endif
         wave.mpu_wakeup();
         wave.setup();
         wave.read_cal_values_from_flash();
