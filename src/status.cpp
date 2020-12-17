@@ -35,6 +35,9 @@ unsigned long event_status_last = 0;
 unsigned long event_status_voltage_last = 0;
 statusPacket_t status_packet;
 
+// Start analysing waves only after first three status sends
+static uint8_t first_three_messages = 0;
+
 extern charging_e charging_state;
 
 TimerMillis timer_pulse_off;
@@ -127,15 +130,16 @@ void status_scheduler(void){
 
 #ifdef debug
 serial_debug.print("status_scheduler -( ");
-serial_debug.print("p thr: ");
-serial_debug.print(settings_packet.data.pulse_threshold);
-serial_debug.print(" p to: ");
-serial_debug.print(settings_packet.data.pulse_on_timeout);
-serial_debug.print(" p min: ");
-serial_debug.print(timer_pulse_off.active());
+//serial_debug.print("p thr: ");
+//serial_debug.print(settings_packet.data.pulse_threshold);
+//serial_debug.print(" p to: ");
+//serial_debug.print(settings_packet.data.pulse_on_timeout);
+//serial_debug.print(" p min: ");
+//serial_debug.print(timer_pulse_off.active());
 serial_debug.println(" )");
 #endif
   unsigned long elapsed = millis()-event_status_last;
+    
   if(elapsed>=(settings_packet.data.system_status_interval*60*1000)){
     event_status_last=millis();
     status_send_flag = true;
@@ -202,10 +206,6 @@ void status_init(void){
     pinMode(GPS_EN, OUTPUT);
     digitalWrite(GPS_EN, LOW);
 #endif
-
-    //serial_debug.println("DEEPSLEEP");
-    //STM32L0.deepsleep(10000);
-
 
   // Needed for communication with ponsel sensors
     // Make sure that water sensors are turned on
@@ -425,11 +425,9 @@ boolean status_send(void){
     serial_debug.println(" )");
   #endif
 
-
-    // Start analysing waves only after first three status sends
-    static uint8_t first_three_messages = 0;
-    if (first_three_messages >= 10) {
-
+    serial_debug.print("!!!!!!!!!!!first_three_messages: ");
+    serial_debug.println(first_three_messages);
+    if (first_three_messages >= 0) {
     // lora_init for some reason pulls down this pin, to prevent this we pull 
     // it up everytime we watn to use accel
 #ifdef OLED_MPU_I2C_EN

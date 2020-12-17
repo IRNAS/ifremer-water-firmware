@@ -33,8 +33,8 @@ unsigned long gps_time_to_fix;
 TimerMillis gps_timer_timeout;
 TimerMillis gps_timer_response_timeout;
 
-extern GNSSLocation gps_location;
-extern GNSSSatellites gps_satellites;
+GNSSLocation gps_location;
+GNSSSatellites gps_satellites;
 
 extern statusPacket_t status_packet;
 
@@ -370,12 +370,15 @@ void gps_acquiring_callback(void){
     float ehpe = gps_location.ehpe();
     boolean gps_3D_fix_required = bitRead(settings_packet.data.gps_settings,0);
     boolean gps_fully_resolved_required = bitRead(settings_packet.data.gps_settings,3);
+    GNSS.satellites(gps_satellites);
 
     #ifdef debug
       serial_debug.print("gps( ehpe ");
       serial_debug.print(ehpe);
       serial_debug.print(" sat ");
       serial_debug.print(gps_location.satellites());
+      serial_debug.print(" sat1 ");
+      serial_debug.print(gps_satellites.count());
       //serial_debug.print(" aopcfg ");
       //serial_debug.print(gps_location.aopCfgStatus());
       //serial_debug.print(" aop ");

@@ -19,8 +19,6 @@
 
 // Initialize timer for periodic callback
 // TimerMillis periodic;
-GNSSLocation gps_location;
-GNSSSatellites gps_satellites;
 
 WaveAnalyser wave; 
 
@@ -284,7 +282,7 @@ void setup() {
     serial_debug.println("Entering 5 second delay, calibration possible");
 #endif
 
-    //delay(5000);
+    delay(5000);
     if(start_calibration) {
         detachInterrupt(digitalPinToInterrupt(BUTTON));
         //STM32L0.wdtEnable(120000); // Two mins for calibration
