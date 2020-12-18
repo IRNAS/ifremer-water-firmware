@@ -68,6 +68,7 @@ struct settingsData_t{
   uint16_t  pulse_min_interval; // how often at maximum can a device send a packet on pulse event
   uint16_t  gps_accel_z_threshold; // accelerometer threshold for z value, such that gps does not trigger on wrong orientation
   uint16_t  fw_version; // fw version data
+  uint16_t  magnetic_declination; // fw version data
 }__attribute__((packed));
 
 

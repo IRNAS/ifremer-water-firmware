@@ -326,6 +326,11 @@ void WaveAnalyser::mpu_wakeup()
     mpu.MPU9250wakeup();
 }
 
+void WaveAnalyser::mpu_set_magnetic_declination(uint16_t mag_dec)
+{
+    mpu.setMagneticDeclination(mag_dec);
+}
+
 #pragma region bool WaveAnalyser::update()
 /* Update - get called every loop
 Input: /

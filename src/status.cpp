@@ -437,6 +437,7 @@ boolean status_send(void){
         wave.mpu_wakeup();
         wave.setup();
         wave.read_cal_values_from_flash();
+        wave.mpu_set_magnetic_declination(settings_packet.data.magnetic_declination);
         // block while the wave function performs and call it periodically
         while(wave.update()==false) {
             STM32L0.wdtReset();

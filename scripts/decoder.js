@@ -76,6 +76,9 @@ function Decoder(bytes) {
     decoded.pulse_min_interval = (bytes[29] << 8) | bytes[28];
     decoded.gps_accel_z_threshold = ((bytes[31] << 8) | bytes[30])-2000;
     decoded.fw_version = (bytes[33] << 8) | bytes[32];
+    raw_magnetic_declination = ((bytes[35] << 8) | bytes[34]);
+    decoded.magnetic_declination = (raw_magnetic_declination - 90) / 100;
+
   }
   else if (port === 12) {
     decoded.resetCause = resetCause_dict[bytes[0]&0x07];

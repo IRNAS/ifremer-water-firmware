@@ -61,7 +61,7 @@ class MPU9250
 	Quaternion Q;                                       // Quaternion
 	VectorFloat Acc;                                    // Acc vector
 
-    float magnetic_declination = 4.62;                  // Ljubljana
+    float magnetic_declination = 4.23;                  // Ljubljana
 
 public:
 
@@ -86,6 +86,7 @@ public:
     void getGyroAccelCalib(float * extGyroBias, float * extAccelBias);
     void setMagCalib(float * extMagBias, float * extMagScale);
     void setGyroAccelCalib(float * extGyroBias, float * extAccelBias);
+    void setMagneticDeclination(uint16_t mag_dec);
 
 private:
 	bool available();                                       // Is new data avaliable

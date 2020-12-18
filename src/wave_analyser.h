@@ -44,6 +44,8 @@ public:
     void read_cal_values_from_flash();
     void mpu_sleep();
     void mpu_wakeup();
+    void mpu_set_magnetic_declination(uint16_t mag_dec);
+
 private:
 
 	MPU9250 mpu; //MPU9250 sensor

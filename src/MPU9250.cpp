@@ -807,6 +807,14 @@ void MPU9250::updateRPY()
 }
 #pragma endregion
 
+void MPU9250::setMagneticDeclination(uint16_t mag_dec)
+{
+    magnetic_declination = (float)(mag_dec - 90) / 100.0;
+     
+	Serial.print("Using magnetic declination of: ");
+	Serial.println(magnetic_declination);
+}
+
 #pragma region void MPU9250::MPU9250SelfTest(float * destination)
 /* Self test calibration data
 Input: float[6] - self test results -return percent deviation from factory trim values, +/- 14 or less deviation is a pass

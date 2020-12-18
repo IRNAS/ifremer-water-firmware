@@ -60,8 +60,11 @@ function Encoder(object, port) {
         bytes[30] = (object.gps_accel_z_threshold+2000) & 0xFF;
         bytes[31] = (object.gps_accel_z_threshold+2000)>>8 & 0xFF;
 
-        bytes[32] = 0;
+        bytes[32] = 0;  // fw_version, we are not able to set it externally
         bytes[33] = 0;
+
+        bytes[34] = (object.magnetic_declination * 100 + 90) & 0xFF;
+        bytes[35] = ((object.magnetic_declination * 100 + 90) >> 8) & 0xFF;
     }
     else if (port === 30){
         bytes[0] = (object.freq_start) & 0xFF;

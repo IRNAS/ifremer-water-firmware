@@ -1,4 +1,5 @@
 #include "settings.h"
+#include <Arduino.h>
 
 //#define debug
 //#define serial_debug  Serial
@@ -50,7 +51,8 @@ void settings_init(void){
     settings_packet.data.pulse_on_timeout=0;
     settings_packet.data.pulse_min_interval=0;
     settings_packet.data.gps_accel_z_threshold=2000;
-
+    settings_packet.data.magnetic_declination=(uint16_t)((4.26 * 100) + 90);    // Magnetic declanation in Maribor, 18.12.2020
+     
     //check if valid settings present in eeprom 
     //uint8_t EEPROM_DATA_START_SETTINGS = EEPROM_DATA_START_SETTINGS;
     #ifndef FORCE_DEFAULT_SETTINGS
@@ -122,6 +124,7 @@ void settings_from_downlink(void)
     settings_packet.data.pulse_threshold=constrain(settings_packet_downlink.data.pulse_threshold, 0,0xff);
     settings_packet.data.pulse_min_interval=constrain(settings_packet_downlink.data.pulse_min_interval, 0,0xffff);
     settings_packet.data.gps_accel_z_threshold=constrain(settings_packet_downlink.data.gps_accel_z_threshold, 0,0xffff);
+    settings_packet.data.magnetic_declination=constrain(settings_packet_downlink.data.magnetic_declination, 0,0xffff);
 
     // Checks against stupid configurations
 
