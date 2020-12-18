@@ -136,9 +136,9 @@ function Decoder(bytes) {
     decoded.bme_pressure    = get_num(bytes[41], 300,1100, 8, 1);
     decoded.bme_humid       = get_num(bytes[42],   0, 100, 8, 1);
 
-    decoded.significant_wh = (bytes[44] << 8) | bytes[43];
-    decoded.average_wh     = (bytes[46] << 8) | bytes[45];
-    decoded.average_period = (bytes[48] << 8) | bytes[47];
+    decoded.significant_wh  = ((bytes[44] << 8) | bytes[43]) / 1000;
+    decoded.average_wh      = ((bytes[46] << 8) | bytes[45]) / 1000;
+    decoded.average_period  = ((bytes[48] << 8) | bytes[47]) / 1000;
   }
   else if (port === 1) {
     decoded.lat = ((bytes[cnt++] << 16) >>> 0) + ((bytes[cnt++] << 8) >>> 0) + bytes[cnt++];

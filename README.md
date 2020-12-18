@@ -106,20 +106,11 @@ GPS commands are a separate option on port 91:
    * `interval` - configures how often in minutes should the unit report position
    * `example binary packet to port 91`: `0xCC 0x05 0x00 0x01 0x00` - send GPS every 1 minute for 5 minutes
 
-## Tools
-There are a few tools available to make using this solution easier, namely:
- * `decoder.js` - TheThingsNetwork V2 payload decoder to jet nicely formatted json data from the binary messages
- * `encoder_settings_json.py` -Python scrip to prepare the json structure for settings to be sent to the device
- * `encoder.js` - TheThingsNetwork V2 payload encoder, accepting the above created json
-
-# Building firwmare
-The firmware needs to be built with two key things configured:
- * `board.h` - specfying board pinout and functions
- * `lorawan.h` - selecting ABP or OTAA activation
+## Scripts
 
 ## Calibration process
 
-Calibration process is needed to calibrate the magnetometer, gyroscope, accelerometer sensor.
+Calibration process is needed to calibrate the magnetometer, gyroscope and accelerometer sensor.
 Entering into calibration process is only possible 5 seconds after startup, after that is disabled.
 To turn on the device put in batteries and press *battery activate* button.
 Green LED will blink once.
@@ -128,9 +119,9 @@ To enter calibration sequence afterwards follow steps below:
 
 1. Press and hold button 1 until LED starts blinking rapidly, then release. Led will turn off.
 2. Press either button 1 or once
-3. When the LED turns on, start moving the unit in figure 8 shape for 30s until the LED turns off
+3. When the LED turns on, start moving the unit in figure 8 shape for 1 minute and 30 seconds until the LED turns off
 4. Put the device on the flat surface.
 5. Press button 1 once and wait 10 seconds.
 6. Led will then blink 3 times, which means that calibration procedure is complete.
 
-Calibration values are saved into devices EEPROM and are not erased at reset.
+Calibration values are saved into devices flash and are not erased at reset.

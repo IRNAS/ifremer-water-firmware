@@ -736,9 +736,9 @@ void MPU9250::magcalMPU9250(float * dest1, float * dest2)
 	LOG(1, "Mag Calibration: Wave device in a figure eight until done!");
 	delay(4000);
 
-	// shoot for ~fifteen seconds of mag data
+	// sample for 90 seconds, only 0x06 mode is used
 	if (Mmode == 0x02) sample_count = 128;  // at 8 Hz ODR, new mag data is available every 125 ms
-	if (Mmode == 0x06) sample_count = 1500;  // at 100 Hz ODR, new mag data is available every 10 ms
+	if (Mmode == 0x06) sample_count = 9000;  // at 100 Hz ODR, new mag data is available every 10 ms
 	for (ii = 0; ii < sample_count; ii++) {
 		readMagData(mag_temp);  // Read the mag data   
 		for (int jj = 0; jj < 3; jj++) {

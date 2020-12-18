@@ -7,6 +7,7 @@
 #include "MPU9250RegisterMap.h" //Register file
 #include "array_structures.h" //Quaternion and vector classes
 #include "debug_print.h"
+#include "board.h"
 #include <stdarg.h>
 
 #define Kp 2.0f * 5.0f // these are the free parameters in the Mahony filter and fusion scheme, Kp for proportional feedback, Ki for integral
@@ -61,7 +62,7 @@ class MPU9250
 	Quaternion Q;                                       // Quaternion
 	VectorFloat Acc;                                    // Acc vector
 
-    float magnetic_declination = 4.23;                  // Ljubljana
+    float magnetic_declination = MAGNETIC_DECLINATION;
 
 public:
 

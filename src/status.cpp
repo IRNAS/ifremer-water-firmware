@@ -427,7 +427,7 @@ boolean status_send(void){
 
     serial_debug.print("!!!!!!!!!!!first_three_messages: ");
     serial_debug.println(first_three_messages);
-    if (first_three_messages >= 0) {
+    if (first_three_messages >= 1) {
     // lora_init for some reason pulls down this pin, to prevent this we pull 
     // it up everytime we watn to use accel
 #ifdef OLED_MPU_I2C_EN
@@ -461,9 +461,9 @@ boolean status_send(void){
             status_packet.data.average_period =  0;
         } 
         else { 
-            status_packet.data.significant_wh =  (uint16_t)(wave.getSignificantWave() * 1000); //height in mm
-            status_packet.data.average_wh =      (uint16_t)(wave.getAverageWave() * 1000); //height in mm
-            status_packet.data.average_period =  (uint16_t)(wave.getAveragePeriod() * 1000); //period in us
+            status_packet.data.significant_wh =  (uint16_t)(wave.getSignificantWave() * 1000);  // height in mm
+            status_packet.data.average_wh =      (uint16_t)(wave.getAverageWave() * 1000);      // height in mm
+            status_packet.data.average_period =  (uint16_t)(wave.getAveragePeriod() * 1000);    // period in us
         }
         wave.mpu_sleep();
     }
