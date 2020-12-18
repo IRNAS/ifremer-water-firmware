@@ -18,7 +18,7 @@
 #define N_GRAD 50  //Distance for gradient calculation
 #define N_GRAD_COUNT 20 //Number of points with the same gradient to consider as new direction
 #define N_WAVES_MAX 10 //Max number of waves to calculate - defines array length (increase if needed)
-#define N_WAVES 5 //Initial number of waves to calculate - can be adjusted by the user
+#define N_WAVES 10 //Initial number of waves to calculate - can be adjusted by the user
 #define INNITAL_CALIBRATION_DELAY 30000 //Delay for quaternions calculations to calibrate
 
 //#define SD_CARD //If using ESP32 and want to use SD card logging uncomment
@@ -26,8 +26,8 @@
 class WaveAnalyser
 {
 public:
-	
-	//WaveAnalyser(); 
+
+	//WaveAnalyser();
 	WaveAnalyser(float cutoff_freq = CUTOFF_FREQ, float sampling_time = SAMPLING_TIME, int order = INIT_ORDER, int n_data_array = N_DATA_ARRAY,
 	int n_grad = N_GRAD, int innitial_calibration_delay = INNITAL_CALIBRATION_DELAY, int n_w = N_WAVES); //Constructor with default parameters
 	void init(); //Initialization
@@ -37,7 +37,7 @@ public:
 	//Set function
 	void setCalibrationDelay(int); //Change calibration delay after initialization
 	void setNumberOfWaves(int); //Change number of waves to be measured after initialization
-	float getSignificantWave(); 
+	float getSignificantWave();
 	float getAverageWave();
 	float getAveragePeriod();
     void calibrate_mpu();
@@ -63,11 +63,11 @@ private:
 	float old_offset = 0.0; //Acceleration offset, old and new wave
 	float new_offset = 0.0;
 
-	int wait_time; 
-	int print_wait_time = 0; 
+	int wait_time;
+	int print_wait_time = 0;
 	int calibration_delay; //Initial delay time for calculations calibration
 
-	int n_waves; //Number of waves to measure 
+	int n_waves; //Number of waves to measure
 	float wave_avg = 0.0; //Last average wave height
 	float wave_significant = 0.0;
 	float period_avg = 0.0;
@@ -78,6 +78,10 @@ private:
 	int16_t calculateOffset(int, int);
 	void calculateWaves();
 	void sort();
+    float calculateHeightVariance();
+    float calculatePeriodVariance();
+    float calculateAvrageHeight();
+    float calculateAvragePeriod();
 
 	//SD card logging
 	//File logfile;
@@ -85,4 +89,4 @@ private:
 };
 
 
-#endif 
+#endif

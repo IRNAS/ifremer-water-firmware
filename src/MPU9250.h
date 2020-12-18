@@ -3,7 +3,7 @@
 #define MPU9250_H
 
 #include <Arduino.h>
-#include <Wire.h> 
+#include <Wire.h>
 #include "MPU9250RegisterMap.h" //Register file
 #include "array_structures.h" //Quaternion and vector classes
 #include "debug_print.h"
@@ -30,9 +30,9 @@ class MPU9250
     float magCalibration[3] = {0, 0, 0};                // factory mag calibration
     float magBias[3] = { 254.35, -148.14, -166.12 };    // Pre-determined
     float magScale[3]  = { 1.03, 1.02, 0.95 };          // Bias corrections for gyro and accelerometer
-    float gyroBias[3] = { 0.77, 0.03, 0.09 };           // bias corrections 
-    float accelBias[3] = { -2.72 / 1000.0, 
-                           13.91 / 1000.0, 
+    float gyroBias[3] = { 0.77, 0.03, 0.09 };           // bias corrections
+    float accelBias[3] = { -2.72 / 1000.0,
+                           13.91 / 1000.0,
                            21.87 / 1000.0 };            // bias corrections
 
     int16_t tempCount;                                  // temperature raw count output
@@ -46,12 +46,12 @@ class MPU9250
 
 	float a[3] = { 0.0f, 0.0f, 0.0f };
     float g[3] = { 0.0f, 0.0f, 0.0f };
-    float m[3] = { 0.0f, 0.0f, 0.0f };                  // variables to hold latest sensor data values 
+    float m[3] = { 0.0f, 0.0f, 0.0f };                  // variables to hold latest sensor data values
 	float lin_ax, lin_ay, lin_az;                       // linear acceleration (acceleration with gravity component subtracted)
 	float eInt[3] = { 0.0f, 0.0f, 0.0f };               // vector to hold integral error for Mahony method
     float pitch, yaw, roll;
     float a12, a22, a31, a32, a33;                      // rotation matrix coefficients for Euler angles and gravity components
-    
+
 	uint32_t delt_t = 0, count = 0;                     // used to control display output rate
 	int data_delay = 10;                                // Delay for data output
 	float deltat = 0.0f, sum_send = 0.0f, sum = 0.0f;   // integration interval for both filter schemes
@@ -61,7 +61,7 @@ class MPU9250
 	Quaternion Q;                                       // Quaternion
 	VectorFloat Acc;                                    // Acc vector
 
-    float magnetic_declination = 4.62;                  // Ljubljana
+    float magnetic_declination = 4.26;                  // Ljubljana
 
 public:
 

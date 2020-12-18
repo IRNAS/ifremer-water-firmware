@@ -33,7 +33,7 @@ Input: All default value parameters
 WaveAnalyser::WaveAnalyser(float cutoff_freq, float sampling_time, int order, int n_data_array, int n_grad, int innitial_calibration_delay, int n_w) {
 
 	A = new MotionArray(n_data_array, n_grad, cutoff_freq, sampling_time, order); //Construct motion array for storing acceleration data
-	
+
 	calibration_delay = innitial_calibration_delay; //Set calibration delay
 	n_waves = n_w; //Set number of waves to be calculated
 
@@ -48,10 +48,10 @@ WaveAnalyser::WaveAnalyser(float cutoff_freq, float sampling_time, int order, in
 Input: /
 Output: /
 Description:
-* Initialize variables 
+* Initialize variables
 */
 void WaveAnalyser::init() {
-	
+
 	grad = 0;
 	current_grad = 0;
 	grad_count = 0;
@@ -80,7 +80,7 @@ void WaveAnalyser::setup() {
 
 	mpu.setup(); //Setup MPU sensor
 	init(); //Initialize analyser
-	
+
 	//Initialize arrays
 	for (int i = 0; i < 2 * N_WAVES_MAX; i++) {
 		max_idx[i] = 0;
@@ -203,8 +203,8 @@ void WaveAnalyser::calibrate_mpu()
         delay(300);
         digitalWrite(LED_RED, LOW);
         delay(300);
-    } 
-    
+    }
+
     mpu.getMagCalib(calibration_package.data.MagBias, calibration_package.data.MagScale);
     mpu.getGyroAccelCalib(calibration_package.data.GyroBias, calibration_package.data.AccelBias);
 
@@ -236,7 +236,7 @@ void WaveAnalyser::calibrate_mpu()
     serial_debug.println("");
     serial_debug.println("\nWriting calibration values to flash");
     delay(10);  // Otherwise last line gets garbled
-#endif 
+#endif
 
     // write calibration to flash
     for(int i=0;i<sizeof(calibration_data_t);i++){
@@ -276,7 +276,7 @@ void WaveAnalyser::calibrate_mpu()
         serial_debug.print(" ");
     }
     serial_debug.println("");
-#endif 
+#endif
 }
 
 void WaveAnalyser::read_cal_values_from_flash()
@@ -311,7 +311,7 @@ void WaveAnalyser::read_cal_values_from_flash()
         serial_debug.print(" ");
     }
     serial_debug.println("");
-#endif 
+#endif
     mpu.setMagCalib(calibration_package.data.MagBias, calibration_package.data.MagScale);
     mpu.setGyroAccelCalib(calibration_package.data.GyroBias, calibration_package.data.AccelBias);
 }
@@ -335,7 +335,7 @@ Description:
 * Check if the initial wait time has passed. During the wait time display seconds left.
 * Add new rotated z-acceleration value and time interval to the calculation array
 * If calculation array is full, send MPU9250 sensor to sleep and proceed with data analysis
-* Check if we have desired number of crests and troughs, if yes analyse size and period. Initialize the class. 
+* Check if we have desired number of crests and troughs, if yes analyse size and period. Initialize the class.
 */
 bool WaveAnalyser::update() {
 
@@ -353,7 +353,7 @@ bool WaveAnalyser::update() {
 			bool full = A->AddElement(z_axis, mpu.getDt()); //Add new acceleration value and time interval
 			//LOG(1, "Z axis: %d", z_axis);
 			//LOG(1, "%d, %d, %d, %d, %d, %d", mpu.getDt(), mpu.getZacc(), A_raw->GetTimeInterval(), A_raw->UpdateAverage(), A->GetTimeInterval(), grad);
-		
+
 			if (full) {
 				//mpu.MPU9250sleep();
 				LOG(1, "MPU9250 to sleep.");
@@ -389,7 +389,7 @@ bool WaveAnalyser::update() {
 
 #pragma region bool WaveAnalyser::analyseData()
 /* Data analysis
-Input: / 
+Input: /
 Output: bool - return true if sufficient waves are detected
 Description:
 * Apply low pass filter to the data
@@ -404,6 +404,7 @@ bool WaveAnalyser::analyseData() {
 	logfile = SD.open(filename, FILE_APPEND);
 	for (int i = 0; i < A->N; i++) {
 		logfile.println(A->x[i]);
+    }
 #endif
 
 	A->FilterData(); //Apply low-pass filter to data
@@ -414,7 +415,8 @@ bool WaveAnalyser::analyseData() {
 	logfile.close();
 #endif // SD_CARD
 
-	LOG(1, "Identifying waves...");
+    LOG(1, "Average dt: %d", (int)A->dt*1000);
+    LOG(1, "Identifying waves...");
 	analyseGradient(); //Analyse gradient and determine min/max points
 	calculateWaves(); //Calculate new waves
 
@@ -426,7 +428,7 @@ bool WaveAnalyser::analyseData() {
 /* Analyse gradients and determine min/max points
 Input: /
 Output: /
-Description: 
+Description:
 * Loop over all data points
 * Compute new gradient
 * If gradient has changed, update current gradient and reset gradient counter. Store position of the first point with new direction.
@@ -434,29 +436,26 @@ Description:
 * Check if we have new direction for sufficient number of consecutive points, if yes add new bottom or top.
 */
 void WaveAnalyser::analyseGradient() {
-	
+
 	//Loop over acceleration points
 	for (int i = 0; i < A->N; i++) {
 
 		int new_grad = A->GetGradient(i); //Get new gradient
-		
+
 		//Analyse new gradient
-		if (grad != new_grad) 
+		if (grad != new_grad && new_grad != 0)
 		{
 			grad = new_grad; //Update gradient
 			grad_count = 0; //Reset gradient counter
 
-			//Store starting idx
-			if (grad == 1 || grad == -1) {
-				max_idx[wave_max_counter] = i;
-			}
+			max_idx[wave_max_counter] = i;
 		}
 		else
 		{
 			grad_count++; //Increase gradient count
 		}
 
-		//Check if new direction can be determined 
+		//Check if new direction can be determined
 		if (grad_count == N_GRAD_COUNT && current_grad != grad) {
 
 			//New bottom
@@ -469,7 +468,7 @@ void WaveAnalyser::analyseGradient() {
 				else {
 					//just update start idx
 				}
-				LOG(2, "Max point: %d", max_idx[wave_max_counter]);
+				LOG(2, "Max point: %d, grad: %d current grad: %d", max_idx[wave_max_counter], grad, current_grad);
 				wave_max_counter++;
 			}
 			current_grad = grad;
@@ -493,12 +492,12 @@ int16_t WaveAnalyser::calculateOffset(int idx1, int idx2) {
 /* Calculate wave heights
 Input: /
 Output: /
-Description: 
+Description:
 * Check if we have at least two local extremes
 * Loop over maximas.
 * Until sufficient number of waves are analysed, calculate offset of previous and next wave-half.
-* Calculate new displacement of half-wave. 
-* Calculate new half-period. 
+* Calculate new displacement of half-wave.
+* Calculate new half-period.
 * Increase wave counter.
 */
 void WaveAnalyser::calculateWaves() {
@@ -510,10 +509,10 @@ void WaveAnalyser::calculateWaves() {
 	else {
 		//At least one whole wave, loop over maximums
 		for (int i = 1; i < wave_max_counter; i++) {
-			
+
 			//Check if we need more waves
 			if (wave_counter < 2 * n_waves) {
-				
+
 				//Determine offset
 				old_offset = calculateOffset(max_idx[i - 1], max_idx[i]); //Fist offset
 				if (i < wave_max_counter - 1) {
@@ -538,11 +537,11 @@ void WaveAnalyser::calculateWaves() {
 #pragma region bool WaveAnalyser::analyseWaves()
 /* Analyse wave heights
 Input: /
-Output: bool - return true if sufficient number of waves were analysed, or number of max/min points in one round is less than 2 - no waves. 
-Description: 
+Output: bool - return true if sufficient number of waves were analysed, or number of max/min points in one round is less than 2 - no waves.
+Description:
 * If sufficient number of waves were detected proceed with analysis.
-* Sort heights by size. 
-* Calculate average wave height and period. 
+* Sort heights by size.
+* Calculate average wave height and period.
 * Determine 2/3 of measurements
 * Calculate average height of waves in correct range - significant height
 */
@@ -552,31 +551,60 @@ bool WaveAnalyser::analyseWaves() {
 	if (wave_counter == 2 * n_waves) {
 
 		sort(); //Sort height
-		LOG(1, "Heights: ");
+        //Print all data
+		LOG(1, "Heights, periods: ");
 #ifdef SD_CARD
 		logfile = SD.open(filename, FILE_APPEND);
 		logfile.println("Heights:");
 #endif
 		for (int i = 0; i < n_waves; i++) {
-				wave_avg += height[i];
-				period_avg += 2 * half_period[i];
-				LOG(1, "%d", (int)(height[i]*100) );
+				LOG(1, "%d %d", (int)(height[i]*100),  2 * (int)half_period[i]);
 #ifdef SD_CARD
 				logfile.println(height[i], 2);
 #endif
 		}
 
-		wave_avg /= (float)(n_waves);
-		period_avg /= (float)n_waves;
+        //Calculate averages of middle half od data
+		wave_avg = calculateAvrageHeight();
+		period_avg = calculateAvragePeriod();
 
-		//Significant wave height
+        //Calculate variance
+        //calculateHeightVariance();
+        //calculatePeriodVariance();
+
+        //Remove outliers for calculations
+        LOG(1, "Heights, periods for calculations: ");
+        float height_calc[n_waves];
+        float period_calc[n_waves];
+        int n_waves_calc = 0;
+        for (int i = 0; i < n_waves; i++) {
+            float tmp_var_height = fabs(height[i] - wave_avg)/wave_avg;
+            float tmp_var_period = fabs(2.0 * half_period[i] - period_avg)/period_avg;
+            if(tmp_var_height < 0.5 && tmp_var_period < 0.5){
+                height_calc[n_waves_calc] = height[i];
+                period_calc[n_waves_calc] = half_period[i];
+                n_waves_calc++;
+                LOG(1, "%d %d", (int)(height[i]*100),  2 * (int)half_period[i]);
+            }
+        }
+        //Recalculate average wave hight and period
+        wave_avg = 0;
+        period_avg = 0;
+        for (int i = 0; i < n_waves_calc; i++) {
+            wave_avg += height_calc[i];
+            period_avg += 2.0 * period_calc[i];
+        }
+        wave_avg /= (float)n_waves_calc;
+        period_avg /= (float)n_waves_calc;
+
+        //Significant wave height, take into the account 2/3 of measurements
 		int tmp_count = 0;
-		int tmp_end = (int) ((2.0 / 3.0) * (float) n_waves + 1.0);
+		int tmp_end = (int) ((2.0 / 3.0) * (float) n_waves_calc + 1.0);
 		for (int i = 0; i < tmp_end; i++) {
-			if (height[i] < 10.0 && height[i] < 1.5 * wave_avg) {
-				wave_significant += height[i];
-				tmp_count++;
-			}
+
+            wave_significant += height_calc[i];
+            tmp_count++;
+
 		}
 		wave_significant /= tmp_count;
 
@@ -596,7 +624,7 @@ bool WaveAnalyser::analyseWaves() {
 	}
 	//Else repeat scanning
 	else {
-		if (wave_max_counter <= 2) {
+		if (wave_max_counter <= 4) {
 			//End declare no specific waves
 			LOG(1, "Array full, no waves.");
 #ifdef SD_CARD
@@ -695,3 +723,74 @@ float WaveAnalyser::getAverageWave() {
 float WaveAnalyser::getAveragePeriod() {
 	return period_avg;
 };
+
+float WaveAnalyser::calculateHeightVariance()
+{
+    //Calculate average
+    float tmp_avg = calculateAvrageHeight();
+    float std = 0;
+    float rel_std = 0;
+
+    //Calculate std
+    for (int i = 0; i < n_waves; i++) {
+       std += ( height[i] - tmp_avg) * ( height[i] - tmp_avg);
+    }
+    std /= n_waves;
+    std = sqrt(std);
+
+    //Relative std
+    rel_std = std/tmp_avg;
+
+    LOG(1, "AVERAGE HEIGHT : %d, STD: %d, RELATIVE STD: %d", (int)(tmp_avg*100), (int)(std*100), (int)(rel_std*100));
+
+    return rel_std;
+}
+
+float WaveAnalyser::calculatePeriodVariance()
+{
+    //Calculate average
+    float tmp_avg = calculateAvragePeriod();
+    float std = 0;
+    float rel_std = 0;
+
+    //Calculate std
+    for (int i = 0; i < n_waves; i++) {
+       std += ( 2.0 * half_period[i] - tmp_avg) * ( 2.0 * half_period[i] - tmp_avg);
+    }
+    std /= n_waves;
+    std = sqrt(std);
+
+    //Relative std
+    rel_std = std/tmp_avg;
+
+    LOG(1, "AVERAGE PERIOD : %d, STD: %d, RELATIVE STD: %d", (int)(tmp_avg*100), (int)(std*100), (int)(rel_std*100));
+
+    return rel_std;
+}
+
+float WaveAnalyser::calculateAvrageHeight()
+{
+    //Calculate average of middle half of data
+    int offs = (int)(n_waves / 4);
+    float avg = 0;
+    for (int i = offs; i < n_waves-offs; i++) {
+        avg += height[i];
+    }
+
+    avg /= (float)(n_waves-2*offs);
+
+    return avg;
+}
+
+float WaveAnalyser::calculateAvragePeriod()
+{
+    int offs = (int)(n_waves / 4);
+    float avg = 0;
+    for (int i = offs; i < n_waves-offs; i++) {
+        avg += 2 * half_period[i];
+    }
+
+    avg /= (float)(n_waves-2*offs);
+
+    return avg;
+}
