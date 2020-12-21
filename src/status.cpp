@@ -372,6 +372,9 @@ boolean status_send(void){
     pinMode(BOOST_EN, OUTPUT);
     digitalWrite(BOOST_EN, HIGH);
 #endif
+    // Delay is required here because ctzn sensor needs some time to turn on.
+    // Wrong values are returned otherwise.
+    delay(1000);
     struct measurements values;
     if (ctzn_present)
     {
@@ -425,7 +428,7 @@ boolean status_send(void){
     serial_debug.println(" )");
   #endif
 
-    if (first_three_messages >= 1) {
+    if (first_three_messages >= 0) {
     // lora_init for some reason pulls down this pin, to prevent this we pull 
     // it up everytime we watn to use accel
 #ifdef OLED_MPU_I2C_EN
