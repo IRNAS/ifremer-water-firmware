@@ -143,8 +143,8 @@ bool MPU9250::isConnectedMPU9250()
 {
 	byte c = readByte(MPU9250_ADDRESS, WHO_AM_I_MPU9250);
 	LOG(3, "MPU9250 WHO AM I = %02X", c);
-	LOG(3, "Compare to  =  %02X", MPU9250_WHOAMI_DEFAULT_VALUE);
-	return (c == MPU9250_WHOAMI_DEFAULT_VALUE);
+	LOG(3, "Compare to  =  %02X or %02X", MPU9250_WHOAMI_DEFAULT_VALUE, 0x71);
+	return (c == MPU9250_WHOAMI_DEFAULT_VALUE || c == 0x71);
 }
 #pragma endregion
 

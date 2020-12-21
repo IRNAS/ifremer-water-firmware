@@ -425,8 +425,6 @@ boolean status_send(void){
     serial_debug.println(" )");
   #endif
 
-    serial_debug.print("!!!!!!!!!!!first_three_messages: ");
-    serial_debug.println(first_three_messages);
     if (first_three_messages >= 1) {
     // lora_init for some reason pulls down this pin, to prevent this we pull 
     // it up everytime we watn to use accel
