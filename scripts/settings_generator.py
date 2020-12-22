@@ -3,8 +3,8 @@ import json
 data = {}
 
 """ Below values can be changed to user preferences """
-data['system_status_interval'] = 3
-data['gps_periodic_interval']   = 2 # 30
+data['system_status_interval'] = 15
+data['gps_periodic_interval']   = 30 # 30
 data['gps_cold_fix_timeout']    = 200
 data['gps_hot_fix_timeout']     = 60
 data['gps_min_fix_time']        = 5
@@ -53,19 +53,3 @@ data['gps_triggered_duration']  = 15                # Unused
 
 json_data = json.dumps(data)
 print(json_data)
-
-
-system_status_interval
-gps_periodic_interval
-gps_triggered_interval
-gps_triggered_threshold
-gps_triggered_duration
-gps_cold_fix_timeout    
-gps_hot_fix_timeout     
-gps_min_fix_time        
-gps_min_ehpe            
-gps_hot_fix_retry       
-gps_cold_fix_retry      
-gps_fail_retry          
-magnetic_declination                
-

@@ -35,8 +35,8 @@ unsigned long event_status_last = 0;
 unsigned long event_status_voltage_last = 0;
 statusPacket_t status_packet;
 
-// Start analysing waves only after first three status sends
-static uint8_t first_three_messages = 0;
+// Start analysing waves only after first status send
+static uint8_t first_sent_message = 0;
 
 extern charging_e charging_state;
 
@@ -428,7 +428,7 @@ boolean status_send(void){
     serial_debug.println(" )");
   #endif
 
-    if (first_three_messages >= 0) {
+    if (first_sent_message >= 1) {
     // lora_init for some reason pulls down this pin, to prevent this we pull 
     // it up everytime we watn to use accel
 #ifdef OLED_MPU_I2C_EN
@@ -469,7 +469,7 @@ boolean status_send(void){
         wave.mpu_sleep();
     }
     else {
-        first_three_messages++;
+        first_sent_message++;
     }
   return lorawan_send(status_packet_port, &status_packet.bytes[0], sizeof(statusData_t));
 }
